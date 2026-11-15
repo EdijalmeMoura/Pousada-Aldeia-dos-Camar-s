@@ -5,6 +5,7 @@ import { uid } from "./utils"
 export type PublicPousada = Pick<Profile, "id" | "nome_pousada" | "slug" | "cor" | "logo_url">
 export type PublicQuarto = Pick<Quarto, "id" | "nome" | "descricao" | "capacidade" | "preco_base" | "comodidades" | "foto_url" | "ativo">
 export type BookingInput = Pick<Reserva, "nome_hospede" | "email" | "telefone" | "check_in" | "check_out" | "adultos" | "metodo_pagamento">
+export type BookingQuote = { valor_total: number; noites: number }
 export type BookingResult = Pick<Reserva, "codigo_reserva" | "valor_total">
 
 export async function publicPousada(slug: string): Promise<PublicPousada | null> {
@@ -29,7 +30,7 @@ export async function publicQuartos(slug: string, ownerId: string): Promise<Publ
       ({ id, nome, descricao, capacidade, preco_base, comodidades, foto_url, ativo }))
 }
 
-export function bookingDates(input: BookingInput, capacity: number) {
+export function bookingDates(input: Pick<BookingInput, "check_in" | "check_out" | "adultos">, capacity: number) {
   const start = new Date(`${input.check_in}T12:00:00Z`)
   const end = new Date(`${input.check_out}T12:00:00Z`)
   const today = new Date().toISOString().slice(0, 10)
@@ -39,18 +40,16 @@ export function bookingDates(input: BookingInput, capacity: number) {
   return nights
 }
 
-export async function createPublicBooking(slug: string, ownerId: string, room: PublicQuarto, input: BookingInput): Promise<BookingResult> {
+export async function quotePublicBooking(slug: string, ownerId: string, room: PublicQuarto, input: Pick<BookingInput, "check_in" | "check_out" | "adultos">): Promise<BookingQuote> {
   const nights = bookingDates(input, room.capacidade)
   if (isSupabaseConfigured && supabase) {
-    const { data, error } = await supabase.rpc("criar_reserva_publica", {
-      p_slug: slug, p_quarto_id: room.id, p_nome: input.nome_hospede,
-      p_email: input.email, p_telefone: input.telefone, p_entrada: input.check_in,
-      p_saida: input.check_out, p_adultos: input.adultos, p_metodo: input.metodo_pagamento,
+    const { data, error } = await supabase.rpc("cotar_reserva_publica", {
+      p_slug: slug, p_quarto_id: room.id, p_entrada: input.check_in,
+      p_saida: input.check_out, p_adultos: input.adultos,
     })
     if (error) throw error
-    return data as BookingResult
+    return data as BookingQuote
   }
-  // Apenas demonstração local: não oferece garantias de concorrência entre navegadores.
   const reservas = await dbList<Reserva>("reservas", ownerId)
   if (reservas.some(r => r.quarto_id === room.id && ["pendente", "confirmada"].includes(r.estado) && r.check_in < input.check_out && r.check_out > input.check_in)) {
     throw new Error("Este quarto já está reservado nessas datas.")
@@ -62,6 +61,22 @@ export async function createPublicBooking(slug: string, ownerId: string, room: P
     const tarifa = tarifas.filter(t => t.quarto_id === room.id && date >= t.data_inicio && date <= t.data_fim).sort((a, b) => b.created_at.localeCompare(a.created_at))[0]
     total += tarifa?.preco_noite ?? room.preco_base
   }
+  return { valor_total: total, noites: nights }
+}
+
+export async function createPublicBooking(slug: string, ownerId: string, room: PublicQuarto, input: BookingInput): Promise<BookingResult> {
+  bookingDates(input, room.capacidade)
+  if (isSupabaseConfigured && supabase) {
+    const { data, error } = await supabase.rpc("criar_reserva_publica", {
+      p_slug: slug, p_quarto_id: room.id, p_nome: input.nome_hospede,
+      p_email: input.email, p_telefone: input.telefone, p_entrada: input.check_in,
+      p_saida: input.check_out, p_adultos: input.adultos, p_metodo: input.metodo_pagamento,
+    })
+    if (error) throw error
+    return data as BookingResult
+  }
+  // Apenas demonstração local: não oferece garantias de concorrência entre navegadores.
+  const { valor_total: total } = await quotePublicBooking(slug, ownerId, room, input)
   const r = await dbInsert<Reserva>("reservas", {
     id: uid(), user_id: ownerId, quarto_id: room.id, ...input,
     estado: "pendente", valor_total: total, codigo_reserva: "HSP-" + uid().replace(/-/g, "").slice(0, 10).toUpperCase(), origem: "direta",

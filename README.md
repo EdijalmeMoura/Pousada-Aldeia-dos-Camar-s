@@ -49,3 +49,7 @@ VITE_SUPABASE_ANON_KEY=<anon-key>
 Aplique **também** `supabase/migrations/002_public_booking.sql` após a migração inicial. Esta migração revoga a leitura anónima das tabelas, expõe apenas campos públicos através de funções RPC e cria reservas com preço calculado e disponibilidade verificada na base de dados (bloqueio transacional + restrição anti-sobreposição). Se já existirem reservas sobrepostas, corrija-as antes de aplicar a restrição.
 
 **Pagamentos:** a opção PIX/cartão regista apenas uma preferência; não há cobrança automática. Não anuncie pagamento integrado antes de configurar um prestador de pagamentos e webhooks. O modo local não oferece garantias de concorrência nem persistência partilhada.
+
+## Cotação e testes
+
+Aplique também `supabase/migrations/003_public_quote.sql` para apresentar o total com tarifas de temporada e disponibilidade antes de confirmar. O servidor volta a verificar tudo ao criar a reserva; uma cotação não garante disponibilidade futura. Execute `npm test` para validar datas, capacidade, tarifa sazonal e reservas sobrepostas no modo local. Estes testes **não substituem** ensaios contra uma instância Supabase com as migrações aplicadas.

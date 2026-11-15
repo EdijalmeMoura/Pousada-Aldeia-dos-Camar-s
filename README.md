@@ -19,7 +19,7 @@ npm install
 npm run dev
 ```
 
-Sem variáveis Supabase, a app corre em **modo local** (localStorage) com todas as funcionalidades — ideal para demonstração. Para produção:
+Sem variáveis Supabase, a app corre em **modo local** (localStorage) apenas para demonstração; os dados não são partilhados entre dispositivos. Para produção:
 
 1. Crie o projeto no Lovable Cloud / Supabase.
 2. Aplique `supabase/migrations/001_schema.sql` (tabelas, RLS, GRANTs, triggers).
@@ -43,3 +43,9 @@ VITE_SUPABASE_ANON_KEY=<anon-key>
 - RLS em todas as tabelas: políticas escopadas por `user_id = auth.uid()` (ou `has_role` para admin); leitura pública por slug para o link direto.
 - IA nunca pede API key ao utilizador: passa sempre pela edge function `ai-generate`.
 - Toasts em todas as ações async; skeletons em todos os fetches; empty states ilustrados em todas as listas vazias.
+
+## Reserva pública segura
+
+Aplique **também** `supabase/migrations/002_public_booking.sql` após a migração inicial. Esta migração revoga a leitura anónima das tabelas, expõe apenas campos públicos através de funções RPC e cria reservas com preço calculado e disponibilidade verificada na base de dados (bloqueio transacional + restrição anti-sobreposição). Se já existirem reservas sobrepostas, corrija-as antes de aplicar a restrição.
+
+**Pagamentos:** a opção PIX/cartão regista apenas uma preferência; não há cobrança automática. Não anuncie pagamento integrado antes de configurar um prestador de pagamentos e webhooks. O modo local não oferece garantias de concorrência nem persistência partilhada.

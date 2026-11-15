@@ -6,8 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
 import { BedDouble, CalendarCheck, Check, Loader2, ShieldCheck, Star, Users } from "lucide-react"
-import { dbInsert, dbList, getProfileBySlug, logActivity, type Quarto, type Reserva } from "@/lib/db"
-import { brl, uid, useSeo } from "@/lib/utils"
+import { publicPousada, publicQuartos, createPublicBooking, type PublicQuarto } from "@/lib/publicBooking"
+import { brl, useSeo } from "@/lib/utils"
+import { isSupabaseConfigured } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,39 +33,33 @@ const fallbackImg = ["/images/quarto-1.jpg", "/images/quarto-2.jpg", "/images/qu
 export default function PublicBooking() {
   const { slug } = useParams<{ slug: string }>()
   const qc = useQueryClient()
-  const [selected, setSelected] = useState<Quarto | null>(null)
+  const [selected, setSelected] = useState<PublicQuarto | null>(null)
   const [done, setDone] = useState<string | null>(null)
 
-  const profileQ = useQuery({ queryKey: ["public-profile", slug], queryFn: () => getProfileBySlug(slug!) })
+  const profileQ = useQuery({ queryKey: ["public-profile", slug], queryFn: () => publicPousada(slug!) })
   const quartosQ = useQuery({
     queryKey: ["public-quartos", profileQ.data?.id],
-    queryFn: () => dbList<Quarto>("quartos", profileQ.data!.id),
+    queryFn: () => publicQuartos(slug!, profileQ.data!.id),
     enabled: Boolean(profileQ.data),
   })
-  useSeo(profileQ.data ? `${profileQ.data.nome_pousada} — Reserve direto sem taxa` : "Reserva direta", "Reserve direto na pousada sem taxa de plataforma. Pagamento PIX ou cartão.")
+  useSeo(profileQ.data ? `${profileQ.data.nome_pousada} — Reserve direto sem taxa` : "Reserva direta", "Reserve direto na pousada sem taxa de plataforma. Seleção de PIX ou cartão; pagamento sujeito à confirmação da pousada.")
 
   const form = useForm<Form>({ resolver: zodResolver(schema), defaultValues: { metodo_pagamento: "pix", adultos: 2 } })
 
   const book = useMutation({
     mutationFn: async (data: Form) => {
-      const noites = Math.max(1, Math.round((new Date(data.check_out).getTime() - new Date(data.check_in).getTime()) / 864e5))
-      return dbInsert<Reserva>("reservas", {
-        id: uid(), user_id: profileQ.data!.id, quarto_id: selected!.id, ...data,
-        estado: "pendente", valor_total: selected!.preco_base * noites,
-        codigo_reserva: "ADC-" + Math.random().toString(36).slice(2, 8).toUpperCase(), origem: "direta",
-      })
+      return createPublicBooking(slug!, profileQ.data!.id, selected!, data)
     },
-    onSuccess: async (r) => {
-      await logActivity(profileQ.data!.id, "reserva", `Reserva direta ${r.codigo_reserva} de ${r.nome_hospede}`)
+    onSuccess: (r) => {
       setDone(r.codigo_reserva)
       toast.success("Reserva registada! A pousada confirma em instantes.")
       qc.invalidateQueries({ queryKey: ["reservas"] })
     },
-    onError: () => toast.error("Não foi possível registar a reserva. Tente novamente."),
+    onError: (error) => toast.error(error instanceof Error ? error.message : "Não foi possível registar a reserva."),
   })
 
   if (profileQ.isLoading) return <div className="mx-auto max-w-7xl space-y-4 p-4"><Skeleton className="h-16" /><Skeleton className="h-64" /></div>
-  if (!profileQ.data) return (
+  if (!profileQ.data || profileQ.isError) return (
     <div className="mx-auto max-w-7xl p-4"><Card><CardContent><EmptyState icon={BedDouble} titulo="Pousada não encontrada" subtitulo="Verifique o link e tente novamente." /></CardContent></Card></div>
   )
 
@@ -93,11 +88,12 @@ export default function PublicBooking() {
       </section>
 
       <main className="mx-auto max-w-7xl px-4 py-10 md:px-6">
+        {!isSupabaseConfigured && <p role="status" className="mb-6 rounded-xl border border-border bg-accent px-4 py-3 text-sm">Modo de demonstração: as reservas são guardadas apenas neste navegador e não são partilhadas com a pousada.</p>}
         {done ? (
           <Card className="animate-fade-up mx-auto max-w-lg shadow-lg"><CardContent className="space-y-4 p-8 text-center">
             <span className="bg-hero-gradient mx-auto flex h-16 w-16 items-center justify-center rounded-full text-white shadow-lg"><Check className="h-8 w-8" /></span>
             <h2 className="text-2xl font-bold">Reserva registada!</h2>
-            <p className="text-muted-foreground">Código <strong>{done}</strong>. Sem taxa de plataforma — pague por PIX ou cartão quando a pousada confirmar.</p>
+            <p className="text-muted-foreground">Código <strong>{done}</strong>. Sem taxa de plataforma — a pousada entrará em contacto para combinar o pagamento. Não foi efetuada qualquer cobrança.</p>
             <p className="flex items-center justify-center gap-1 text-sm text-muted-foreground"><ShieldCheck className="h-4 w-4" /> Reserva direta, margem toda da pousada.</p>
           </CardContent></Card>
         ) : !selected ? (
@@ -152,16 +148,16 @@ export default function PublicBooking() {
                     <div className="space-y-2"><Label htmlFor="telefone">Telefone</Label><Input id="telefone" {...form.register("telefone")} placeholder="81987654321" inputMode="numeric" />{form.formState.errors.telefone && <p className="text-sm text-destructive">{form.formState.errors.telefone.message}</p>}</div>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
-                    <div className="space-y-2"><Label htmlFor="check_in">Entrada</Label><Input id="check_in" type="date" {...form.register("check_in")} /></div>
-                    <div className="space-y-2"><Label htmlFor="check_out">Saída</Label><Input id="check_out" type="date" {...form.register("check_out")} /></div>
-                    <div className="space-y-2"><Label htmlFor="adultos">Adultos</Label><Input id="adultos" type="number" {...form.register("adultos")} /></div>
+                    <div className="space-y-2"><Label htmlFor="check_in">Entrada</Label><Input id="check_in" type="date" min={new Date().toISOString().slice(0, 10)} {...form.register("check_in")} /></div>
+                    <div className="space-y-2"><Label htmlFor="check_out">Saída</Label><Input id="check_out" type="date" min={form.watch("check_in") || new Date().toISOString().slice(0, 10)} {...form.register("check_out")} /></div>
+                    <div className="space-y-2"><Label htmlFor="adultos">Adultos</Label><Input id="adultos" type="number" min={1} max={selected.capacidade} {...form.register("adultos")} /></div>
                   </div>
                   <div className="space-y-2"><Label htmlFor="metodo_pagamento">Pagamento</Label>
                     <select id="metodo_pagamento" {...form.register("metodo_pagamento")} className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-sm"><option value="pix">PIX</option><option value="cartao">Cartão</option></select>
                   </div>
                   {noites > 0 && <p className="rounded-xl bg-accent p-3 text-center text-sm font-medium">{noites} noite(s) · Total: <strong>{brl(selected.preco_base * noites)}</strong> (sem taxa de plataforma)</p>}
                   <Button type="submit" className="w-full" disabled={book.isPending}>{book.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Confirmar reserva direta</Button>
-                  <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4" /> Sem comissão · Confirmação pela pousada</p>
+                  <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4" /> Sem cobrança online · Pagamento combinado com a pousada</p>
                 </form>
               </CardContent>
             </Card>

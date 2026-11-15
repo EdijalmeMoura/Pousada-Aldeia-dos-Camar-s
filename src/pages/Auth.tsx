@@ -1,0 +1,92 @@
+import { Link, useNavigate } from "react-router-dom"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { toast } from "sonner"
+import { BedDouble, Chrome, Loader2 } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useSeo } from "@/lib/utils"
+
+const schema = z.object({
+  nome: z.string().min(2, "Indique o seu nome"),
+  email: z.string().email("Indique um e-mail válido"),
+  password: z.string().min(6, "A palavra-passe deve ter pelo menos 6 caracteres"),
+})
+type Form = z.infer<typeof schema>
+
+function AuthShell({ titulo, subtitulo, children }: { titulo: string; subtitulo: string; children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-2 text-center">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground"><BedDouble className="h-6 w-6" /></span>
+          <CardTitle className="text-2xl">{titulo}</CardTitle>
+          <CardDescription>{subtitulo}</CardDescription>
+        </CardHeader>
+        <CardContent>{children}</CardContent>
+      </Card>
+    </div>
+  )
+}
+
+export function Login() {
+  useSeo("Entrar — Aldeia dos Camarás", "Aceda ao painel da sua pousada e gira reservas diretas sem comissão.")
+  const { signIn, signInGoogle } = useAuth()
+  const navigate = useNavigate()
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Form>({ resolver: zodResolver(schema) })
+
+  const onSubmit = async (data: Form) => {
+    try { await signIn(data.email, data.password); toast.success("Bem-vindo(a) de volta!"); navigate("/app") }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível entrar. Tente novamente.") }
+  }
+  const google = async () => {
+    try { await signInGoogle(); toast.success("Login com Google concluído!"); navigate("/onboarding") }
+    catch { toast.error("Não foi possível entrar com o Google.") }
+  }
+
+  return (
+    <AuthShell titulo="Bem-vindo(a) de volta" subtitulo="Entre para gerir a sua pousada">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <div className="space-y-2"><Label htmlFor="nome">Nome</Label><Input id="nome" {...register("nome")} placeholder="O seu nome" />{errors.nome && <p className="text-sm text-destructive">{errors.nome.message}</p>}</div>
+        <div className="space-y-2"><Label htmlFor="email">E-mail</Label><Input id="email" type="email" {...register("email")} placeholder="voce@pousada.pt" />{errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}</div>
+        <div className="space-y-2"><Label htmlFor="password">Palavra-passe</Label><Input id="password" type="password" {...register("password")} placeholder="••••••••" />{errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}</div>
+        <Button type="submit" className="w-full" disabled={isSubmitting}>{isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />} Entrar</Button>
+        <Button type="button" variant="outline" className="w-full" onClick={google}><Chrome className="h-4 w-4" /> Continuar com Google</Button>
+        <p className="text-center text-sm text-muted-foreground">Ainda não tem conta? <Link to="/signup" className="font-medium text-primary hover:underline">Criar conta grátis</Link></p>
+      </form>
+    </AuthShell>
+  )
+}
+
+export function Signup() {
+  useSeo("Criar conta — Aldeia dos Camarás", "Crie a sua conta gratuita e comece a vender reservas diretas sem comissão.")
+  const { signUp, signInGoogle } = useAuth()
+  const navigate = useNavigate()
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Form>({ resolver: zodResolver(schema) })
+
+  const onSubmit = async (data: Form) => {
+    try { await signUp(data.email, data.password, data.nome); toast.success("Conta criada! Vamos configurar a sua pousada."); navigate("/onboarding") }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível criar a conta.") }
+  }
+  const google = async () => {
+    try { await signInGoogle(); toast.success("Conta criada com Google!"); navigate("/onboarding") }
+    catch { toast.error("Não foi possível continuar com o Google.") }
+  }
+
+  return (
+    <AuthShell titulo="Crie a sua conta" subtitulo="7 dias grátis · Sem cartão · Sem compromisso">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <div className="space-y-2"><Label htmlFor="nome">Nome</Label><Input id="nome" {...register("nome")} placeholder="O seu nome" />{errors.nome && <p className="text-sm text-destructive">{errors.nome.message}</p>}</div>
+        <div className="space-y-2"><Label htmlFor="email">E-mail</Label><Input id="email" type="email" {...register("email")} placeholder="voce@pousada.pt" />{errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}</div>
+        <div className="space-y-2"><Label htmlFor="password">Palavra-passe</Label><Input id="password" type="password" {...register("password")} placeholder="Mínimo 6 caracteres" />{errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}</div>
+        <Button type="submit" className="w-full" disabled={isSubmitting}>{isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />} Criar conta grátis</Button>
+        <Button type="button" variant="outline" className="w-full" onClick={google}><Chrome className="h-4 w-4" /> Continuar com Google</Button>
+        <p className="text-center text-sm text-muted-foreground">Já tem conta? <Link to="/login" className="font-medium text-primary hover:underline">Entrar</Link></p>
+      </form>
+    </AuthShell>
+  )
+}

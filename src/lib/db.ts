@@ -148,3 +148,23 @@ export async function saveProfile(p: Profile) {
   writeAll(db)
   return p
 }
+
+/** Dados de demonstração: 3 quartos com fotos, tarifas e reservas */
+export async function seedDemo(userId: string) {
+  const quartos: Quarto[] = [
+    { id: uid(), user_id: userId, nome: "Quarto Maré Alta", descricao: "Vista para o mar, cama king e varanda privativa.", capacidade: 2, preco_base: 320, comodidades: "Wi-Fi, ar-condicionado, pequeno-almoço incluído", foto_url: "/images/quarto-1.jpg", ativo: true, codigo: "4821", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: uid(), user_id: userId, nome: "Chalé Serra Verde", descricao: "Aconchegante, com lareira e vista para as colinas.", capacidade: 4, preco_base: 450, comodidades: "Wi-Fi, lareira, cozinha equipada", foto_url: "/images/quarto-2.jpg", ativo: true, codigo: "4822", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: uid(), user_id: userId, nome: "Suíte Piscina", descricao: "Acesso direto à piscina, moderno e luminoso.", capacidade: 3, preco_base: 520, comodidades: "Wi-Fi, piscina privativa, ar-condicionado", foto_url: "/images/quarto-3.jpg", ativo: true, codigo: "4823", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+  ]
+  for (const q of quartos) await dbInsert<Quarto>("quartos", q)
+  await dbInsert<Tarifa>("tarifas", { id: uid(), user_id: userId, quarto_id: quartos[0].id, temporada: "Alta estação — dezembro", data_inicio: "2026-12-01", data_fim: "2027-01-15", preco_noite: 420 })
+  const hoje = new Date()
+  const fmt = (d: Date) => d.toISOString().slice(0, 10)
+  const reservas: Reserva[] = [
+    { id: uid(), user_id: userId, quarto_id: quartos[0].id, nome_hospede: "Mariana Silva", email: "mariana@email.com", telefone: "81987654321", check_in: fmt(hoje), check_out: fmt(new Date(Date.now() + 3 * 864e5)), adultos: 2, estado: "confirmada", metodo_pagamento: "pix", valor_total: 960, codigo_reserva: "ADC-8K2P4Q", origem: "direta", created_at: new Date(Date.now() - 2 * 864e5).toISOString(), updated_at: new Date().toISOString() },
+    { id: uid(), user_id: userId, quarto_id: quartos[2].id, nome_hospede: "Carlos Eduardo", email: "carlos@email.com", telefone: "11987654321", check_in: fmt(new Date(Date.now() + 2 * 864e5)), check_out: fmt(new Date(Date.now() + 5 * 864e5)), adultos: 3, estado: "pendente", metodo_pagamento: "cartao", valor_total: 1560, codigo_reserva: "ADC-3M7X9A", origem: "direta", created_at: new Date(Date.now() - 864e5).toISOString(), updated_at: new Date().toISOString() },
+    { id: uid(), user_id: userId, quarto_id: quartos[1].id, nome_hospede: "Ana Beatriz", email: "ana@email.com", telefone: "21987654321", check_in: fmt(new Date(Date.now() - 864e5)), check_out: fmt(new Date(Date.now() + 864e5)), adultos: 4, estado: "concluida", metodo_pagamento: "pix", valor_total: 900, codigo_reserva: "ADC-5T1R8W", origem: "plataforma", created_at: new Date(Date.now() - 5 * 864e5).toISOString(), updated_at: new Date().toISOString() },
+  ]
+  for (const r of reservas) await dbInsert<Reserva>("reservas", r)
+  await logActivity(userId, "seed", "Dados de demonstração carregados")
+}

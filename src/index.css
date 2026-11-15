@@ -47,6 +47,39 @@
     --ring: 192 91% 42%;
   }
   * { @apply border-border; }
+  html { scroll-behavior: smooth; }
   body { @apply bg-background text-foreground font-sans antialiased; }
   h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
+  ::selection { background: hsl(var(--primary) / 0.25); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: hsl(var(--muted)); }
+  ::-webkit-scrollbar-thumb { background: hsl(var(--primary) / 0.5); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: hsl(var(--primary) / 0.7); }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(120deg, hsl(var(--primary)), hsl(174 91% 40%));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .bg-hero-gradient {
+    background: linear-gradient(135deg, hsl(192 91% 36%) 0%, hsl(174 91% 40%) 55%, hsl(199 89% 55%) 100%);
+  }
+  .animate-fade-up {
+    animation: fadeUp 0.6s ease-out both;
+  }
+  .animate-float {
+    animation: float 5s ease-in-out infinite;
+  }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }

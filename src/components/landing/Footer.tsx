@@ -1,5 +1,6 @@
+import { BrandMark } from "@/components/BrandMark"
 import { Link } from "react-router-dom"
-import { ArrowRight, BedDouble, ShieldCheck } from "lucide-react"
+import { ArrowRight, ShieldCheck } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export function Footer() {
@@ -14,7 +15,7 @@ export function Footer() {
       </section>
       <footer className="border-t">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-muted-foreground md:flex-row md:px-6">
-          <p className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground"><BedDouble className="h-4 w-4" /></span> © {new Date().getFullYear()} Hospedaê.</p>
+          <p className="flex items-center gap-2"><BrandMark /> © {new Date().getFullYear()} Hospedaê.</p>
           <nav className="flex gap-5" aria-label="Rodapé">
             <Link to="/privacidade" className="hover:text-primary">Privacidade</Link>
             <Link to="/termos" className="hover:text-primary">Termos</Link>

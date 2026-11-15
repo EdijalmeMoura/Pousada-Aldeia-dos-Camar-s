@@ -1,10 +1,11 @@
+import { BrandMark } from "@/components/BrandMark"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
-import { ArrowLeft, ArrowRight, BedDouble, Check, Loader2, Palette, User } from "lucide-react"
+import { ArrowLeft, ArrowRight, Check, Loader2, Palette, User } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { saveProfile } from "@/lib/db"
 import { slugify, useSeo } from "@/lib/utils"
@@ -66,7 +67,7 @@ export default function Onboarding() {
         <CardContent className="space-y-6 p-6 md:p-8">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 font-bold"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground"><BedDouble className="h-4 w-4" /></span> Hospedaê</span>
+              <span className="flex items-center gap-2 font-bold"><BrandMark /> Hospedaê</span>
               <span className="text-sm text-muted-foreground">Passo {step + 1} de 3</span>
             </div>
             <Progress value={((step + 1) / 3) * 100} />

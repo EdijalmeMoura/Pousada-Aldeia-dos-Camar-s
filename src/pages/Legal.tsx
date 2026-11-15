@@ -1,12 +1,13 @@
+import { BrandMark } from "@/components/BrandMark"
 import { Link } from "react-router-dom"
-import { BedDouble } from "lucide-react"
+import { } from "lucide-react"
 import { useSeo } from "@/lib/utils"
 
 function Shell({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   useSeo(`${titulo} — Hospedaê`, `${titulo} da Hospedaê.`)
   return (
     <div className="min-h-screen">
-      <header className="border-b"><div className="mx-auto flex h-16 max-w-7xl items-center px-4 md:px-6"><Link to="/" className="flex items-center gap-2 font-bold"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground"><BedDouble className="h-4 w-4" /></span> Hospedaê</Link></div></header>
+      <header className="border-b"><div className="mx-auto flex h-16 max-w-7xl items-center px-4 md:px-6"><Link to="/" className="flex items-center gap-2 font-bold"><BrandMark /> Hospedaê</Link></div></header>
       <main className="mx-auto max-w-3xl space-y-6 px-4 py-12 md:px-6">
         <h1 className="text-3xl font-bold">{titulo}</h1>
         <div className="space-y-4 text-sm leading-relaxed text-muted-foreground">{children}</div>

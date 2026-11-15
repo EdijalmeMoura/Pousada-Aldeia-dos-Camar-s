@@ -1,5 +1,6 @@
+import { BrandMark } from "@/components/BrandMark"
 import { Link } from "react-router-dom"
-import { BedDouble } from "lucide-react"
+import { } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { Hero } from "@/components/landing/Hero"
@@ -18,7 +19,7 @@ export default function Landing() {
       <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
           <Link to="/" className="flex items-center gap-2 font-bold tracking-tight">
-            <span className="bg-hero-gradient flex h-8 w-8 items-center justify-center rounded-xl text-white shadow-md"><BedDouble className="h-4 w-4" /></span>
+            <BrandMark />
             Hospedaê
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium md:flex" aria-label="Navegação">

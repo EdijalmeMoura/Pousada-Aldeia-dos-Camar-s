@@ -1,9 +1,10 @@
+import { BrandMark } from "@/components/BrandMark"
 import { Link, useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
-import { BedDouble, Chrome, Loader2, MessageSquareText, Star, Wallet } from "lucide-react"
+import { Chrome, Loader2, MessageSquareText, Star, Wallet } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,7 +26,7 @@ function AuthShell({ titulo, subtitulo, children }: { titulo: string; subtitulo:
         <img src="/images/hero.jpg" alt="Pousada à beira-mar" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
         <div className="relative flex h-full flex-col justify-between p-10 text-white">
-          <span className="flex items-center gap-2 font-bold"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20 backdrop-blur"><BedDouble className="h-4 w-4" /></span> Hospedaê</span>
+          <span className="flex items-center gap-2 font-bold"><BrandMark /> Hospedaê</span>
           <div className="space-y-4">
             <h2 className="max-w-md text-3xl font-bold leading-tight">A sua pousada a vender direto — sem comissão, sem fricção.</h2>
             <ul className="space-y-2 text-sm text-white/85">
@@ -39,7 +40,7 @@ function AuthShell({ titulo, subtitulo, children }: { titulo: string; subtitulo:
       <div className="flex items-center justify-center bg-muted/40 p-4">
         <Card className="w-full max-w-md shadow-lg">
           <CardHeader className="space-y-2 text-center">
-            <span className="bg-hero-gradient mx-auto flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-md"><BedDouble className="h-6 w-6" /></span>
+            <BrandMark />
             <CardTitle className="text-2xl">{titulo}</CardTitle>
             <CardDescription>{subtitulo}</CardDescription>
           </CardHeader>

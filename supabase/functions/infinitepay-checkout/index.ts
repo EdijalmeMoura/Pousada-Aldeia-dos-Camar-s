@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { cents, checkoutAddress } from "../_shared/payment.ts"
 
 const headers = { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info" }
 const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers })
@@ -29,8 +30,7 @@ serve(async req => {
     if (!handle || !merchantKey) return reply({ error: "InfinitePay ainda não ativada para esta pousada; use a cobrança manual." }, 409)
     const origin = Deno.env.get("PUBLIC_SITE_URL")
     if (!origin || !origin.startsWith("https://")) return reply({ error: "Endereço público não configurado" }, 503)
-    const amount = Math.round(Number(r.valor_total) * 100)
-    if (!Number.isSafeInteger(amount) || amount < 100) return reply({ error: "Valor inválido" }, 400)
+    const amount = cents(r.valor_total)
     const checkout = await fetch("https://api.checkout.infinitepay.io/links", {
       method: "POST", headers: { "Content-Type": "application/json", "X-Api-Key": merchantKey },
       body: JSON.stringify({ handle, order_nsu: r.id, items: [{ description: `Reserva ${r.codigo_reserva} — ${p.nome_pousada}`, quantity: 1, price: amount }],
@@ -41,8 +41,9 @@ serve(async req => {
     if (!checkout.ok) return reply({ error: "Não foi possível criar o checkout na InfinitePay" }, 502)
     const result = await checkout.json()
     const checkoutUrl = result.checkout_url
-    if (typeof checkoutUrl !== "string" || !checkoutUrl.startsWith("https://")) return reply({ error: "Checkout inválido" }, 502)
-    const { error } = await admin.from("reservas").update({ checkout_url: checkoutUrl, pagamento_estado: "aguarda_pagamento" }).eq("id", r.id).eq("pagamento_estado", "nao_iniciado")
+    if (!checkoutAddress(checkoutUrl)) return reply({ error: "Checkout inválido" }, 502)
+    const { data: saved, error } = await admin.from("reservas").update({ checkout_url: checkoutUrl, checkout_handle: handle, pagamento_estado: "aguarda_pagamento" }).eq("id", r.id).eq("pagamento_estado", "nao_iniciado").select("checkout_url").maybeSingle()
+    if (!saved && !error) return reply({ error: "Outro checkout já foi criado; recarregue a reserva." }, 409)
     if (error) return reply({ error: "Não foi possível guardar o link de pagamento" }, 500)
     return reply({ url: checkoutUrl })
   } catch { return reply({ error: "Erro ao preparar o pagamento" }, 500) }

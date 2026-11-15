@@ -6,10 +6,10 @@ import { z } from "zod"
 import { toast } from "sonner"
 import { format, parseISO } from "date-fns"
 import { pt as ptPT } from "date-fns/locale"
-import { CalendarCheck, Loader2, MessageCircle, Plus, Trash2 } from "lucide-react"
+import { CalendarCheck, CreditCard, Loader2, MessageCircle, Plus, Trash2 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { dbDelete, dbInsert, dbList, dbUpdate, logActivity, type Quarto, type Reserva } from "@/lib/db"
-import { waLink } from "@/lib/supabase"
+import { waLink, supabase } from "@/lib/supabase"
 import { paymentMessage } from "@/lib/manualPayment"
 import { brl, uid, useSeo } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -70,6 +70,21 @@ export default function Reservas() {
     onError: () => toast.error("Não foi possível atualizar a reserva."),
   })
 
+  const checkout = useMutation({
+    mutationFn: async (reserva_id: string) => {
+      if (!supabase) throw new Error("Ative o Supabase para usar o checkout.")
+      const { data, error } = await supabase.functions.invoke("infinitepay-checkout", { body: { reserva_id } })
+      if (error || !data?.url) throw new Error(data?.error || "Não foi possível gerar o link. Verifique a configuração da InfinitePay.")
+      return data.url as string
+    },
+    onSuccess: async (url) => {
+      await navigator.clipboard.writeText(url)
+      toast.success("Link copiado. Envie-o ao hóspede e aguarde a confirmação do pagamento.")
+      qc.invalidateQueries({ queryKey: ["reservas"] })
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Falha ao criar o link."),
+  })
+
   const del = useMutation({
     mutationFn: (id: string) => dbDelete("reservas", id),
     onSuccess: () => { toast.success("Reserva removida."); qc.invalidateQueries({ queryKey: ["reservas"] }) },
@@ -121,7 +136,7 @@ export default function Reservas() {
             : (
               <div className="overflow-x-auto">
                 <Table>
-                  <TableHeader><TableRow><TableHead>Código</TableHead><TableHead>Hóspede</TableHead><TableHead>Período</TableHead><TableHead>Origem</TableHead><TableHead>Estado</TableHead><TableHead className="text-right">Valor</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
+                  <TableHeader><TableRow><TableHead>Código</TableHead><TableHead>Hóspede</TableHead><TableHead>Período</TableHead><TableHead>Origem</TableHead><TableHead>Estado</TableHead><TableHead>Pagamento</TableHead><TableHead className="text-right">Valor</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
                   <TableBody>
                     {(reservasQ.data ?? []).map((r) => (
                       <TableRow key={r.id}>
@@ -134,9 +149,11 @@ export default function Reservas() {
                             {(Object.keys(estadoLabel) as Reserva["estado"][]).map((s) => <option key={s} value={s}>{estadoLabel[s]}</option>)}
                           </select>
                         </TableCell>
+                        <TableCell><Badge variant={r.pagamento_estado === "pago" ? "default" : "outline"}>{r.pagamento_estado === "pago" ? "Pago (verificado)" : r.pagamento_estado === "aguarda_pagamento" ? "A aguardar" : "Não pago"}</Badge></TableCell>
                         <TableCell className="text-right font-medium">{brl(r.valor_total)}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
+                            {profile?.infinitepay_handle && r.pagamento_estado !== "pago" && <Button variant="ghost" size="icon" aria-label="Copiar link InfinitePay" disabled={checkout.isPending} onClick={() => checkout.mutate(r.id)}><CreditCard className="h-4 w-4 text-primary" /></Button>}
                             <Button variant="ghost" size="icon" aria-label="Enviar dados de pagamento ao hóspede por WhatsApp" asChild>
                               <a href={waLink(r.telefone, paymentMessage(r, { nome_pousada: profile?.nome_pousada || "Pousada", chave_pix: profile?.chave_pix || "", link_pagamento: profile?.link_pagamento || "" }))} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4 text-primary" /></a>
                             </Button>

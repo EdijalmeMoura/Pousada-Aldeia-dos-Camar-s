@@ -22,6 +22,7 @@ export default function Configuracoes() {
   const [slug, setSlug] = useState(profile?.slug ?? "")
   const [whatsapp, setWhatsapp] = useState(profile?.whatsapp ?? "")
   const [regras, setRegras] = useState(profile?.regras_casa ?? "")
+  const [infinitepayHandle, setInfinitepayHandle] = useState(profile?.infinitepay_handle ?? "")
   const [chavePix, setChavePix] = useState(profile?.chave_pix ?? "")
   const [linkPagamento, setLinkPagamento] = useState(profile?.link_pagamento ?? "")
   const [saving, setSaving] = useState(false)
@@ -31,11 +32,12 @@ export default function Configuracoes() {
   const publicUrl = `${location.origin}/${slug || profile.slug}`
 
   const save = async () => {
+    if (infinitepayHandle && !/^[a-zA-Z0-9_-]{3,80}$/.test(infinitepayHandle)) { toast.error("InfiniteTag inválida: use apenas letras, números, hífen ou sublinhado."); return }
     const erro = validatePaymentDetails(chavePix.trim(), linkPagamento.trim())
     if (erro) { toast.error(erro); return }
     setSaving(true)
     try {
-      await saveProfile({ ...profile, nome, nome_pousada: pousada, slug: slugify(slug), whatsapp, regras_casa: regras, chave_pix: chavePix.trim(), link_pagamento: linkPagamento.trim() })
+      await saveProfile({ ...profile, nome, nome_pousada: pousada, slug: slugify(slug), whatsapp, regras_casa: regras, chave_pix: chavePix.trim(), link_pagamento: linkPagamento.trim(), infinitepay_handle: infinitepayHandle.trim() })
       await refreshProfile()
       toast.success("Configurações guardadas!")
     } catch { toast.error("Não foi possível guardar.") }
@@ -97,6 +99,11 @@ export default function Configuracoes() {
                 <Label htmlFor="whatsapp">WhatsApp da pousada (com DDD)</Label>
                 <Input id="whatsapp" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="81987654321" inputMode="numeric" />
                 <p className="text-xs text-muted-foreground">Contacto da pousada; as mensagens de cobrança são enviadas manualmente na página Reservas.</p>
+              </div>
+              <div className="space-y-3 rounded-2xl border p-4">
+                <h3 className="font-semibold">InfinitePay — conta própria</h3>
+                <p className="text-sm text-muted-foreground">Cada pousada recebe diretamente na sua conta. O checkout só fica disponível após ativação segura da chave no servidor; nunca introduza chaves de API nesta página.</p>
+                <div className="space-y-2"><Label htmlFor="infinitepay_handle">InfiniteTag (sem $)</Label><Input id="infinitepay_handle" value={infinitepayHandle} onChange={e => setInfinitepayHandle(e.target.value)} placeholder="nome-da-pousada" autoComplete="off" /></div>
               </div>
               <div className="space-y-3 rounded-2xl border p-4">
                 <h3 className="font-semibold">Cobrança manual</h3>

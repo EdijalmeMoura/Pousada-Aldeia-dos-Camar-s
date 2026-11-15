@@ -11,7 +11,7 @@ export interface Profile {
   id: string; nome: string; email: string; avatar_url: string | null
   plano: string; trial_ends_at: string | null; created_at: string
   nome_pousada: string; slug: string; whatsapp: string; cor: string; logo_url: string
-  onboarding_concluido: boolean; regras_casa: string
+  onboarding_concluido: boolean; regras_casa: string; chave_pix: string; link_pagamento: string
 }
 export interface Quarto {
   id: string; user_id: string; nome: string; descricao: string; capacidade: number
@@ -113,7 +113,7 @@ export function newProfile(user: { id: string; email: string; nome?: string }): 
     id: user.id, nome, email: user.email, avatar_url: null, plano: "trial",
     trial_ends_at: new Date(Date.now() + 7 * 864e5).toISOString(),
     created_at: new Date().toISOString(), nome_pousada: "", slug: slugify(nome) + "-" + user.id.slice(0, 6),
-    whatsapp: "", cor: "#0891b2", logo_url: "", onboarding_concluido: false,
+    whatsapp: "", cor: "#0891b2", logo_url: "", chave_pix: "", link_pagamento: "", onboarding_concluido: false,
     regras_casa: "Check-in a partir das 14h. Check-out até às 11h. Proibido fumar nos quartos. Animais de estimação mediante acordo prévio.",
   }
 }

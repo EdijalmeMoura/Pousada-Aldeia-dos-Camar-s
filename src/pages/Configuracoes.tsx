@@ -3,6 +3,7 @@ import { toast } from "sonner"
 import { Check, Copy, ExternalLink, Loader2, MessageCircle, Save } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { saveProfile } from "@/lib/db"
+import { validatePaymentDetails } from "@/lib/manualPayment"
 import { waLink, waTemplates } from "@/lib/supabase"
 import { slugify, useSeo } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -21,6 +22,8 @@ export default function Configuracoes() {
   const [slug, setSlug] = useState(profile?.slug ?? "")
   const [whatsapp, setWhatsapp] = useState(profile?.whatsapp ?? "")
   const [regras, setRegras] = useState(profile?.regras_casa ?? "")
+  const [chavePix, setChavePix] = useState(profile?.chave_pix ?? "")
+  const [linkPagamento, setLinkPagamento] = useState(profile?.link_pagamento ?? "")
   const [saving, setSaving] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -28,9 +31,11 @@ export default function Configuracoes() {
   const publicUrl = `${location.origin}/${slug || profile.slug}`
 
   const save = async () => {
+    const erro = validatePaymentDetails(chavePix.trim(), linkPagamento.trim())
+    if (erro) { toast.error(erro); return }
     setSaving(true)
     try {
-      await saveProfile({ ...profile, nome, nome_pousada: pousada, slug: slugify(slug), whatsapp, regras_casa: regras })
+      await saveProfile({ ...profile, nome, nome_pousada: pousada, slug: slugify(slug), whatsapp, regras_casa: regras, chave_pix: chavePix.trim(), link_pagamento: linkPagamento.trim() })
       await refreshProfile()
       toast.success("Configurações guardadas!")
     } catch { toast.error("Não foi possível guardar.") }
@@ -91,7 +96,14 @@ export default function Configuracoes() {
               <div className="space-y-2">
                 <Label htmlFor="whatsapp">WhatsApp da pousada (com DDD)</Label>
                 <Input id="whatsapp" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="81987654321" inputMode="numeric" />
-                <p className="text-xs text-muted-foreground">Usado para cobranças, lembretes e follow-up automáticos.</p>
+                <p className="text-xs text-muted-foreground">Contacto da pousada; as mensagens de cobrança são enviadas manualmente na página Reservas.</p>
+              </div>
+              <div className="space-y-3 rounded-2xl border p-4">
+                <h3 className="font-semibold">Cobrança manual</h3>
+                <p className="text-sm text-muted-foreground">Os dados não aparecem no link público. Envie-os ao hóspede a partir da página Reservas, após rever a mensagem.</p>
+                <div className="space-y-2"><Label htmlFor="chave_pix">Chave PIX da pousada</Label><Input id="chave_pix" value={chavePix} onChange={e => setChavePix(e.target.value)} placeholder="CPF, e-mail, telefone ou chave aleatória" autoComplete="off" /></div>
+                <div className="space-y-2"><Label htmlFor="link_pagamento">Link de pagamento seguro (opcional)</Label><Input id="link_pagamento" type="url" value={linkPagamento} onChange={e => setLinkPagamento(e.target.value)} placeholder="https://..." autoComplete="off" /></div>
+                <p className="text-xs text-muted-foreground">Se o prestador criar um link diferente por reserva, não guarde aqui um link reutilizável: envie o link específico manualmente.</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
                 <Button variant="outline" asChild><a href={waLink(whatsapp || "5500000000000", waTemplates.cobranca("hóspede", "R$ 300,00"))} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4" /> Modelo cobrança</a></Button>

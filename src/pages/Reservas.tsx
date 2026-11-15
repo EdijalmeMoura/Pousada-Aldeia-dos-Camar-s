@@ -9,7 +9,8 @@ import { pt as ptPT } from "date-fns/locale"
 import { CalendarCheck, Loader2, MessageCircle, Plus, Trash2 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { dbDelete, dbInsert, dbList, dbUpdate, logActivity, type Quarto, type Reserva } from "@/lib/db"
-import { waLink, waTemplates } from "@/lib/supabase"
+import { waLink } from "@/lib/supabase"
+import { paymentMessage } from "@/lib/manualPayment"
 import { brl, uid, useSeo } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -78,7 +79,7 @@ export default function Reservas() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div><h1 className="text-2xl font-bold">Reservas</h1><p className="text-sm text-muted-foreground">Confirme pagamentos e mantenha os hóspedes informados.</p></div>
+        <div><h1 className="text-2xl font-bold">Reservas</h1><p className="text-sm text-muted-foreground">Envie a cobrança ao hóspede e confirme a reserva após verificar o pagamento.</p></div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild><Button><Plus className="h-4 w-4" /> Nova reserva</Button></DialogTrigger>
           <DialogContent>
@@ -136,8 +137,8 @@ export default function Reservas() {
                         <TableCell className="text-right font-medium">{brl(r.valor_total)}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" aria-label="Cobrar via WhatsApp" asChild>
-                              <a href={waLink(profile?.whatsapp || r.telefone, waTemplates.cobranca(r.nome_hospede, brl(r.valor_total)))} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4 text-primary" /></a>
+                            <Button variant="ghost" size="icon" aria-label="Enviar dados de pagamento ao hóspede por WhatsApp" asChild>
+                              <a href={waLink(r.telefone, paymentMessage(r, { nome_pousada: profile?.nome_pousada || "Pousada", chave_pix: profile?.chave_pix || "", link_pagamento: profile?.link_pagamento || "" }))} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4 text-primary" /></a>
                             </Button>
                             <Button variant="ghost" size="icon" aria-label="Remover reserva" onClick={() => del.mutate(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                           </div>

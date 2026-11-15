@@ -53,3 +53,9 @@ Aplique **também** `supabase/migrations/002_public_booking.sql` após a migraç
 ## Cotação e testes
 
 Aplique também `supabase/migrations/003_public_quote.sql` para apresentar o total com tarifas de temporada e disponibilidade antes de confirmar. O servidor volta a verificar tudo ao criar a reserva; uma cotação não garante disponibilidade futura. Execute `npm test` para validar datas, capacidade, tarifa sazonal e reservas sobrepostas no modo local. Estes testes **não substituem** ensaios contra uma instância Supabase com as migrações aplicadas.
+
+## Cobrança manual
+
+Aplique `supabase/migrations/004_manual_payment.sql` após as migrações anteriores. Em **Configurações → Integrações**, o proprietário pode guardar uma chave PIX e/ou link HTTPS de pagamento; estes dados só são visíveis na área autenticada. Em **Reservas**, o botão WhatsApp abre uma mensagem pré-preenchida dirigida ao número do **hóspede** (não a envia automaticamente). O proprietário deve verificar o pagamento no prestador ou extrato antes de alterar o estado da reserva. Nunca introduza dados de cartão nesta aplicação. O link reutilizável só deve ser configurado se o prestador permitir o mesmo link para qualquer valor; caso contrário, crie e envie um link individual fora da aplicação.
+
+Integração com InfinitePay e confirmação automática por webhook ainda **não** estão implementadas.

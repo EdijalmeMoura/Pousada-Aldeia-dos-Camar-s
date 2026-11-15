@@ -19,7 +19,7 @@ import { EmptyState } from "@/components/EmptyState"
 interface Msg { papel: "ia" | "hospede"; texto: string }
 
 export default function Checkin() {
-  useSeo("Check-in por IA — Aldeia dos Camarás", "Check-in conversacional por IA: recolha dados, envie regras e o código do quarto.")
+  useSeo("Check-in por IA — Hospedaê", "Check-in conversacional por IA: recolha dados, envie regras e o código do quarto.")
   const { user, profile } = useAuth()
   const qc = useQueryClient()
   const reservasQ = useQuery({ queryKey: ["reservas", user!.id], queryFn: () => dbList<Reserva>("reservas", user!.id) })

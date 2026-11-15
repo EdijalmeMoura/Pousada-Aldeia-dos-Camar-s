@@ -12,14 +12,14 @@ import { Footer } from "@/components/landing/Footer"
 import { useSeo } from "@/lib/utils"
 
 export default function Landing() {
-  useSeo("Pousada Aldeia dos Camarás — Reserva direta sem comissão", "Reserve direto na pousada sem taxa de plataforma. Check-in conversacional por IA, calendário sincronizado e pagamento PIX ou cartão.")
+  useSeo("Hospedaê — Reserva direta sem comissão", "Reserve direto na pousada sem taxa de plataforma. Check-in conversacional por IA, calendário sincronizado e pagamento PIX ou cartão.")
   return (
     <div className="min-h-screen">
       <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
           <Link to="/" className="flex items-center gap-2 font-bold tracking-tight">
             <span className="bg-hero-gradient flex h-8 w-8 items-center justify-center rounded-xl text-white shadow-md"><BedDouble className="h-4 w-4" /></span>
-            Aldeia dos Camarás
+            Hospedaê
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium md:flex" aria-label="Navegação">
             <a href="#como-funciona" className="hover:text-primary">Como funciona</a>

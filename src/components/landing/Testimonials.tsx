@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 const depoimentos = [
   { nome: "Mariana S.", pousada: "Pousada Vista do Mar, Bahia", texto: "Recuperámos 18% de comissão logo no primeiro mês. O link direto virou o nosso canal principal.", inicial: "M" },
   { nome: "Carlos E.", pousada: "Chalé Serra Verde, Minas Gerais", texto: "O check-in por IA acabou com as filas na receção. Os hóspedes chegam e entram direto no quarto.", inicial: "C" },
-  { nome: "Ana Beatriz L.", pousada: "Casa Aldeia, Pernambuco", texto: "Configuração em 10 minutos e calendário sempre sincronizado. Não volto às plataformas.", inicial: "A" },
+  { nome: "Ana Beatriz L.", pousada: "Pousada Brisa do Mar, Pernambuco", texto: "Configuração em 10 minutos e calendário sempre sincronizado. Não volto às plataformas.", inicial: "A" },
 ]
 
 export function Testimonials() {

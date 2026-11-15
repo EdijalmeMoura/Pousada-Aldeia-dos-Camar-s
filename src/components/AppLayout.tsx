@@ -37,7 +37,7 @@ export function AppLayout() {
             <button className="rounded-xl p-2 hover:bg-accent lg:hidden" onClick={() => setOpen(!open)} aria-label="Abrir menu">{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
             <Link to="/app" className="flex items-center gap-2 font-bold tracking-tight">
               <span className="bg-hero-gradient flex h-8 w-8 items-center justify-center rounded-xl text-white shadow-md"><BedDouble className="h-4 w-4" /></span>
-              <span className="hidden sm:inline">{profile?.nome_pousada || "Aldeia dos Camarás"}</span>
+              <span className="hidden sm:inline">{profile?.nome_pousada || "Hospedaê"}</span>
             </Link>
           </div>
           <div className="flex items-center gap-2">

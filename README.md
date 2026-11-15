@@ -1,4 +1,4 @@
-# Pousada Aldeia dos Camarás
+# Hospedaê
 
 Reserva direta sem taxa de plataforma e check-in conversacional por IA para pousadas pequenas e aluguéis de temporada.
 

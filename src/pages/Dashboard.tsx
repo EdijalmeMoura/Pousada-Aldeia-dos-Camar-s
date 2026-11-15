@@ -21,7 +21,7 @@ const gradients = [
 ]
 
 export default function Dashboard() {
-  useSeo("Painel — Aldeia dos Camarás", "Acompanhe reservas, receita e check-ins do dia na sua pousada.")
+  useSeo("Painel — Hospedaê", "Acompanhe reservas, receita e check-ins do dia na sua pousada.")
   const { user } = useAuth()
   const uid = user!.id
 

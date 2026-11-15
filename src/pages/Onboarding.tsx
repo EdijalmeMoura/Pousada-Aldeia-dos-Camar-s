@@ -28,7 +28,7 @@ type Form = z.infer<typeof schema>
 const cores = ["#0891b2", "#0d9488", "#ea580c", "#7c3aed", "#db2777", "#65a30d"]
 
 export default function Onboarding() {
-  useSeo("Configuração inicial — Aldeia dos Camarás", "Configure o perfil, a marca e a primeira ação da sua pousada em 3 passos rápidos.")
+  useSeo("Configuração inicial — Hospedaê", "Configure o perfil, a marca e a primeira ação da sua pousada em 3 passos rápidos.")
   const { profile, refreshProfile } = useAuth()
   const navigate = useNavigate()
   const [step, setStep] = useState(0)
@@ -66,7 +66,7 @@ export default function Onboarding() {
         <CardContent className="space-y-6 p-6 md:p-8">
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 font-bold"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground"><BedDouble className="h-4 w-4" /></span> Aldeia dos Camarás</span>
+              <span className="flex items-center gap-2 font-bold"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground"><BedDouble className="h-4 w-4" /></span> Hospedaê</span>
               <span className="text-sm text-muted-foreground">Passo {step + 1} de 3</span>
             </div>
             <Progress value={((step + 1) / 3) * 100} />
@@ -77,7 +77,7 @@ export default function Onboarding() {
               <div className="space-y-4">
                 <h1 className="flex items-center gap-2 text-xl font-bold"><User className="h-5 w-5 text-primary" /> O seu perfil</h1>
                 <div className="space-y-2"><Label htmlFor="nome">O seu nome</Label><Input id="nome" {...register("nome")} placeholder="Ex.: Maria Silva" />{errors.nome && <p className="text-sm text-destructive">{errors.nome.message}</p>}</div>
-                <div className="space-y-2"><Label htmlFor="nome_pousada">Nome da pousada</Label><Input id="nome_pousada" {...register("nome_pousada")} placeholder="Ex.: Pousada Aldeia dos Camarás" />{errors.nome_pousada && <p className="text-sm text-destructive">{errors.nome_pousada.message}</p>}</div>
+                <div className="space-y-2"><Label htmlFor="nome_pousada">Nome da pousada</Label><Input id="nome_pousada" {...register("nome_pousada")} placeholder="Ex.: Hospedaê" />{errors.nome_pousada && <p className="text-sm text-destructive">{errors.nome_pousada.message}</p>}</div>
               </div>
             )}
             {step === 1 && (
@@ -85,7 +85,7 @@ export default function Onboarding() {
                 <h1 className="flex items-center gap-2 text-xl font-bold"><Palette className="h-5 w-5 text-primary" /> Marca e contacto</h1>
                 <div className="space-y-2"><Label htmlFor="slug">Link público de reserva</Label>
                   <div className="flex items-center gap-2"><span className="text-sm text-muted-foreground">/{watch("slug") || "…"}</span></div>
-                  <Input id="slug" {...register("slug")} placeholder="aldeia-dos-camaras" />{errors.slug && <p className="text-sm text-destructive">{errors.slug.message}</p>}
+                  <Input id="slug" {...register("slug")} placeholder="hospedae" />{errors.slug && <p className="text-sm text-destructive">{errors.slug.message}</p>}
                   <p className="text-xs text-muted-foreground">É este o endereço que partilha com os hóspedes — sem taxa de plataforma.</p>
                 </div>
                 <div className="space-y-2"><Label htmlFor="whatsapp">WhatsApp (com DDD)</Label><Input id="whatsapp" {...register("whatsapp")} placeholder="81987654321" inputMode="numeric" />{errors.whatsapp && <p className="text-sm text-destructive">{errors.whatsapp.message}</p>}</div>

@@ -39,7 +39,7 @@ const tarifaSchema = z.object({
 type TarifaForm = z.infer<typeof tarifaSchema>
 
 export default function Quartos() {
-  useSeo("Quartos e tarifas — Aldeia dos Camarás", "Cadastre quartos e defina tarifas por temporada para o seu link direto.")
+  useSeo("Quartos e tarifas — Hospedaê", "Cadastre quartos e defina tarifas por temporada para o seu link direto.")
   const { user } = useAuth()
   const qc = useQueryClient()
   const [editing, setEditing] = useState<Quarto | null>(null)

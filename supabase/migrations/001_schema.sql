@@ -1,4 +1,4 @@
--- Pousada Aldeia dos Camarás — Schema completo (Lovable Cloud / Postgres)
+-- Hospedaê — Schema completo (Lovable Cloud / Postgres)
 -- Reserva direta sem comissão + check-in conversacional por IA
 
 -- ============ TIPOS ============

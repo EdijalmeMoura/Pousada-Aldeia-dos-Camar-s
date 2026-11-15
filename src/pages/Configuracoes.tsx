@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 
 export default function Configuracoes() {
-  useSeo("Configurações — Aldeia dos Camarás", "Gira perfil, plano, WhatsApp e o link público de reserva da sua pousada.")
+  useSeo("Configurações — Hospedaê", "Gira perfil, plano, WhatsApp e o link público de reserva da sua pousada.")
   const { profile, refreshProfile } = useAuth()
   const [nome, setNome] = useState(profile?.nome ?? "")
   const [pousada, setPousada] = useState(profile?.nome_pousada ?? "")

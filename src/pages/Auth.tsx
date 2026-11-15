@@ -25,7 +25,7 @@ function AuthShell({ titulo, subtitulo, children }: { titulo: string; subtitulo:
         <img src="/images/hero.jpg" alt="Pousada à beira-mar" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
         <div className="relative flex h-full flex-col justify-between p-10 text-white">
-          <span className="flex items-center gap-2 font-bold"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20 backdrop-blur"><BedDouble className="h-4 w-4" /></span> Aldeia dos Camarás</span>
+          <span className="flex items-center gap-2 font-bold"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/20 backdrop-blur"><BedDouble className="h-4 w-4" /></span> Hospedaê</span>
           <div className="space-y-4">
             <h2 className="max-w-md text-3xl font-bold leading-tight">A sua pousada a vender direto — sem comissão, sem fricção.</h2>
             <ul className="space-y-2 text-sm text-white/85">
@@ -51,7 +51,7 @@ function AuthShell({ titulo, subtitulo, children }: { titulo: string; subtitulo:
 }
 
 export function Login() {
-  useSeo("Entrar — Aldeia dos Camarás", "Aceda ao painel da sua pousada e gira reservas diretas sem comissão.")
+  useSeo("Entrar — Hospedaê", "Aceda ao painel da sua pousada e gira reservas diretas sem comissão.")
   const { signIn, signInGoogle } = useAuth()
   const navigate = useNavigate()
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Form>({ resolver: zodResolver(schema) })
@@ -80,7 +80,7 @@ export function Login() {
 }
 
 export function Signup() {
-  useSeo("Criar conta — Aldeia dos Camarás", "Crie a sua conta gratuita e comece a vender reservas diretas sem comissão.")
+  useSeo("Criar conta — Hospedaê", "Crie a sua conta gratuita e comece a vender reservas diretas sem comissão.")
   const { signUp, signInGoogle } = useAuth()
   const navigate = useNavigate()
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Form>({ resolver: zodResolver(schema) })

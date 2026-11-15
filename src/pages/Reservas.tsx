@@ -37,7 +37,7 @@ type Form = z.infer<typeof schema>
 const estadoLabel: Record<Reserva["estado"], string> = { pendente: "Pendente", confirmada: "Confirmada", cancelada: "Cancelada", concluida: "Concluída" }
 
 export default function Reservas() {
-  useSeo("Reservas — Aldeia dos Camarás", "Gira reservas diretas e de plataforma, confirme pagamentos e contacte hóspedes no WhatsApp.")
+  useSeo("Reservas — Hospedaê", "Gira reservas diretas e de plataforma, confirme pagamentos e contacte hóspedes no WhatsApp.")
   const { user, profile } = useAuth()
   const qc = useQueryClient()
   const [open, setOpen] = useState(false)

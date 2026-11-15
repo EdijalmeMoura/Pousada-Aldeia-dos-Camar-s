@@ -69,3 +69,14 @@ O proprietário gera o link na página Reservas, copia-o e envia-o ao hóspede. 
 ## Verificação antes de ativar a InfinitePay
 
 Aplique também `supabase/migrations/006_payment_safety.sql` **depois** da `005`: fixa a InfiniteTag usada em cada checkout e impede a remoção de reservas com pagamento verificado. O CI em `.github/workflows/ci.yml` executa testes e build a cada push/PR. Os testes de pagamento cobrem regras puras de valor, confirmação e URL, mas **não** substituem testes das funções Deno e do webhook com uma conta real. Para um ensaio operacional, teste com uma compra real de baixo valor na conta da própria pousada, confirme o estado `Pago (verificado)` na reserva e confronte-o com o extrato InfinitePay antes de abrir o checkout ao público. Não confirme pagamentos apenas pelo redirecionamento do navegador.
+
+## Publicar numa hospedagem simples (Apache/cPanel)
+
+1. Execute `npm ci --legacy-peer-deps`, `npm test` e `npm run build` na sua máquina ou no CI.
+2. Envie **o conteúdo** de `dist/` (incluindo o ficheiro oculto `.htaccess`) para a pasta pública do domínio, normalmente `public_html/`. Não envie `src/`, `node_modules/`, `.env` ou chaves privadas.
+3. O `.htaccess` encaminha rotas como `/login`, `/app` e `/<slug>` para `index.html` quando o caminho não corresponde a um ficheiro; confirme que o alojamento Apache tem `mod_rewrite` e `AllowOverride` ativos. Se usar Nginx, configure `try_files $uri $uri/ /index.html;` no servidor.
+4. No ambiente **antes do build**, configure `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (chave pública do cliente) para ligar o frontend ao Supabase. O Vite incorpora estes valores no JavaScript gerado; mudar variáveis no alojamento depois do build não altera o site. Não coloque chaves `service_role`, API keys InfinitePay nem `LOVABLE_API_KEY` no frontend.
+5. Publique as migrações SQL e edge functions no projeto Supabase **separado**. Configure os segredos apenas nas edge functions. A hospedagem de ficheiros estáticos não executa Postgres, autenticação, webhooks ou funções Deno.
+6. Verifique `/`, `/login`, `/app` e o link público após atualizar a página. Sem Supabase, o site funciona apenas como **demonstração local por navegador**, não como sistema partilhado para receber reservas reais.
+
+Se a hospedagem não permitir `.htaccess` ou uma regra de fallback para `index.html`, as rotas diretas da aplicação poderão devolver 404; nesse caso, peça ao fornecedor essa configuração ou escolha um serviço de hospedagem estática com suporte a SPA.

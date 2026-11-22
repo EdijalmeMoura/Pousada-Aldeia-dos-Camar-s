@@ -80,3 +80,7 @@ Aplique também `supabase/migrations/006_payment_safety.sql` **depois** da `005`
 6. Verifique `/`, `/login`, `/app` e o link público após atualizar a página. Sem Supabase, o site funciona apenas como **demonstração local por navegador**, não como sistema partilhado para receber reservas reais.
 
 Se a hospedagem não permitir `.htaccess` ou uma regra de fallback para `index.html`, as rotas diretas da aplicação poderão devolver 404; nesse caso, peça ao fornecedor essa configuração ou escolha um serviço de hospedagem estática com suporte a SPA.
+
+## Calendário e bloqueios
+
+Aplique `supabase/migrations/007_calendar_blocks.sql` depois da `006`. Em **/app/calendario** a pousada consulta reservas por quarto, bloqueia períodos (saída exclusiva) para manutenção/uso privado e remove bloqueios. A API pública recusa cotação e criação sobre datas bloqueadas; a migração impede também reservas inseridas fora da API pública e valida conflitos na criação interna do proprietário, incluindo tarifa de temporada e lotação. O bloqueio e as reservas públicas usam a mesma linha do quarto para serializar operações concorrentes. Os testes locais (`npm test`) cobrem bloqueios e datas adjacentes. Esta migração ainda deve ser aplicada e ensaiada numa instância Supabase antes de aceitar reservas reais.

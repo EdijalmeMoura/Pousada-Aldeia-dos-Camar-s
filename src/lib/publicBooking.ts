@@ -1,4 +1,4 @@
-import { dbInsert, dbList, type Profile, type Quarto, type Reserva, type Tarifa } from "./db"
+import { dbInsert, dbList, type Profile, type Quarto, type Reserva, type Tarifa, type Bloqueio } from "./db"
 import { isSupabaseConfigured, supabase } from "./supabase"
 import { uid } from "./utils"
 
@@ -53,6 +53,10 @@ export async function quotePublicBooking(slug: string, ownerId: string, room: Pu
   const reservas = await dbList<Reserva>("reservas", ownerId)
   if (reservas.some(r => r.quarto_id === room.id && ["pendente", "confirmada"].includes(r.estado) && r.check_in < input.check_out && r.check_out > input.check_in)) {
     throw new Error("Este quarto já está reservado nessas datas.")
+  }
+  const bloqueios = await dbList<Bloqueio>("bloqueios", ownerId)
+  if (bloqueios.some(b => b.quarto_id === room.id && b.data_inicio < input.check_out && b.data_fim > input.check_in)) {
+    throw new Error("O quarto está bloqueado nesse período.")
   }
   const tarifas = await dbList<Tarifa>("tarifas", ownerId)
   let total = 0

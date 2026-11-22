@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest"
 import { bookingDates, createPublicBooking, quotePublicBooking, type PublicQuarto } from "./publicBooking"
-import { dbInsert, type Tarifa } from "./db"
+import { dbInsert, type Bloqueio, type Tarifa } from "./db"
 
 vi.mock("./supabase", () => ({ isSupabaseConfigured: false, supabase: null }))
 
@@ -31,6 +31,15 @@ describe("reserva pública em demonstração", () => {
     expect(() => bookingDates({ ...booking(), check_out: date(-1) }, 2)).toThrow("datas")
     expect(() => bookingDates({ ...booking(), check_out: date(91) }, 2)).toThrow("90")
     expect(() => bookingDates({ ...booking(), adultos: 3 }, 2)).toThrow("capacidade")
+  })
+
+  it("impede reservas em dias bloqueados e permite datas adjacentes", async () => {
+    await dbInsert<Bloqueio>("bloqueios", { id: "block-1", user_id: "owner", quarto_id: room.id,
+      data_inicio: date(1), data_fim: date(3), motivo: "Manutenção" })
+    await expect(quotePublicBooking("pousada", "owner", room, booking())).rejects.toThrow("bloqueado")
+    await expect(createPublicBooking("pousada", "owner", room, booking())).rejects.toThrow("bloqueado")
+    await expect(quotePublicBooking("pousada", "owner", room,
+      { ...booking(), check_in: date(3), check_out: date(4) })).resolves.toHaveProperty("valor_total", 100)
   })
 
   it("aplica tarifa sazonal por noite e recusa sobreposição", async () => {

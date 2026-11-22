@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { dbDelete, dbInsert, dbList, dbUpdate, logActivity, type Quarto, type Reserva } from "@/lib/db"
 import { waLink, supabase } from "@/lib/supabase"
 import { paymentMessage } from "@/lib/manualPayment"
+import { bookingDates, quotePublicBooking } from "@/lib/publicBooking"
 import { brl, uid, useSeo } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -49,19 +50,30 @@ export default function Reservas() {
   const create = useMutation({
     mutationFn: async (data: Form) => {
       const q = (quartosQ.data ?? []).find((x) => x.id === data.quarto_id)
-      const noites = Math.max(1, Math.round((new Date(data.check_out).getTime() - new Date(data.check_in).getTime()) / 864e5))
-      return dbInsert<Reserva>("reservas", {
-        id: uid(), user_id: user!.id, ...data,
-        estado: "pendente", valor_total: (q?.preco_base ?? 0) * noites,
-        codigo_reserva: "ADC-" + Math.random().toString(36).slice(2, 8).toUpperCase(),
+      if (!q || !q.ativo) throw new Error("Escolha um quarto ativo.")
+      bookingDates(data, q.capacidade)
+      if (supabase) {
+        const { data: result, error } = await supabase.rpc("criar_reserva_proprietario", {
+          p_quarto_id: q.id, p_nome: data.nome_hospede, p_email: data.email,
+          p_telefone: data.telefone, p_entrada: data.check_in, p_saida: data.check_out,
+          p_adultos: data.adultos, p_metodo: data.metodo_pagamento, p_origem: data.origem,
+        })
+        if (error) throw error
+        return { codigo_reserva: result.codigo_reserva, nome_hospede: data.nome_hospede }
+      }
+      const quote = await quotePublicBooking(profile!.slug, user!.id, q, data)
+      const r = await dbInsert<Reserva>("reservas", {
+        id: uid(), user_id: user!.id, ...data, estado: "pendente", valor_total: quote.valor_total,
+        codigo_reserva: "HSP-" + uid().replace(/-/g, "").slice(0, 10).toUpperCase(),
       })
+      return r
     },
     onSuccess: async (r) => {
       await logActivity(user!.id, "reserva", `Reserva ${r.codigo_reserva} criada para ${r.nome_hospede}`)
       toast.success(`Reserva ${r.codigo_reserva} criada! Envie o link de pagamento ao hóspede.`)
       qc.invalidateQueries({ queryKey: ["reservas"] }); setOpen(false); form.reset({ metodo_pagamento: "pix", origem: "direta", adultos: 2 })
     },
-    onError: () => toast.error("Não foi possível criar a reserva."),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível criar a reserva."),
   })
 
   const setEstado = useMutation({
@@ -105,17 +117,17 @@ export default function Reservas() {
                   <option value="">Escolha o quarto…</option>{(quartosQ.data ?? []).map((q) => <option key={q.id} value={q.id}>{q.nome}</option>)}
                 </select>{form.formState.errors.quarto_id && <p className="text-sm text-destructive">{form.formState.errors.quarto_id.message}</p>}
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-2"><Label htmlFor="nome_hospede">Hóspede</Label><Input id="nome_hospede" {...form.register("nome_hospede")} placeholder="Nome completo" />{form.formState.errors.nome_hospede && <p className="text-sm text-destructive">{form.formState.errors.nome_hospede.message}</p>}</div>
                 <div className="space-y-2"><Label htmlFor="telefone">Telefone</Label><Input id="telefone" {...form.register("telefone")} placeholder="81987654321" inputMode="numeric" />{form.formState.errors.telefone && <p className="text-sm text-destructive">{form.formState.errors.telefone.message}</p>}</div>
               </div>
               <div className="space-y-2"><Label htmlFor="email">E-mail</Label><Input id="email" type="email" {...form.register("email")} placeholder="hospede@email.com" />{form.formState.errors.email && <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>}</div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid gap-3 sm:grid-cols-3">
                 <div className="space-y-2"><Label htmlFor="check_in">Entrada</Label><Input id="check_in" type="date" {...form.register("check_in")} /></div>
                 <div className="space-y-2"><Label htmlFor="check_out">Saída</Label><Input id="check_out" type="date" {...form.register("check_out")} /></div>
                 <div className="space-y-2"><Label htmlFor="adultos">Adultos</Label><Input id="adultos" type="number" {...form.register("adultos")} /></div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-2"><Label htmlFor="metodo_pagamento">Pagamento</Label>
                   <select id="metodo_pagamento" {...form.register("metodo_pagamento")} className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-sm"><option value="pix">PIX</option><option value="cartao">Cartão</option></select>
                 </div>

@@ -35,11 +35,12 @@ export interface Checkin {
   dados: Record<string, string>; codigo_quarto: string; regras_enviadas: boolean
   created_at: string; updated_at: string
 }
+export interface Bloqueio { id: string; user_id: string; quarto_id: string; data_inicio: string; data_fim: string; motivo: string; created_at: string }
 export interface Atividade {
   id: string; user_id: string; tipo: string; descricao: string; created_at: string
 }
 
-type Table = "profiles" | "quartos" | "tarifas" | "reservas" | "checkins" | "atividades"
+type Table = "profiles" | "quartos" | "tarifas" | "reservas" | "checkins" | "atividades" | "bloqueios"
 const LS = "pousada_db_v1"
 
 function readAll(): Record<Table, any[]> {
@@ -47,7 +48,7 @@ function readAll(): Record<Table, any[]> {
     const raw = localStorage.getItem(LS)
     if (raw) return JSON.parse(raw)
   } catch { /* ignore */ }
-  const empty: Record<Table, any[]> = { profiles: [], quartos: [], tarifas: [], reservas: [], checkins: [], atividades: [] }
+  const empty: Record<Table, any[]> = { profiles: [], quartos: [], tarifas: [], reservas: [], checkins: [], atividades: [], bloqueios: [] }
   localStorage.setItem(LS, JSON.stringify(empty))
   return empty
 }
@@ -62,7 +63,7 @@ export async function dbList<T>(table: Table, userId?: string): Promise<T[]> {
     return (data ?? []) as T[]
   }
   const db = readAll()
-  const rows = db[table].filter((r: any) => !userId || r.user_id === userId || r.id === userId)
+  const rows = (db[table] ?? []).filter((r: any) => !userId || r.user_id === userId || r.id === userId)
   return rows as T[]
 }
 
@@ -74,6 +75,7 @@ export async function dbInsert<T extends Record<string, any>>(table: Table, row:
   }
   const db = readAll()
   const full = { ...row, id: row.id ?? uid(), created_at: row.created_at ?? new Date().toISOString(), updated_at: new Date().toISOString() }
+  db[table] ??= []
   db[table].unshift(full)
   writeAll(db)
   return full as unknown as T

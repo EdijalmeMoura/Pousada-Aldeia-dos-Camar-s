@@ -45,3 +45,15 @@ php backend/tests/integration.php
 ```
 
 O script recusa-se a correr sem confirmação, sem base com `test` no nome ou se já houver contas. Cria dados temporários para duas pousadas, verifica isolamento do catálogo, preço, consentimento, conflito e bloqueios; apaga-os num bloco `finally`. **Não execute na base de produção**. Este ensaio é sequencial: ainda faltam testes de pedidos HTTP com sessões e de concorrência real entre processos. Este ambiente não tem PHP CLI/MySQL, pelo que o ensaio **não foi executado** aqui. Nunca envie o ficheiro privado para o repositório nem o coloque na pasta pública do site.
+
+## Ensaio HTTP (sessões e pedidos paralelos)
+
+Use **outro domínio de ensaio independente** do domínio de produção, identificado por `test` ou `staging`, com HTTPS, PHP, migrações 001–004 aplicadas numa **base descartável** e `trusted_origin`/`cookie_path` privados corretos. O domínio `projetoredesnordeste.com.br` e os seus subdomínios estão explicitamente bloqueados neste teste. A partir de uma máquina com Node 20+:
+
+```sh
+RUN_PHP_HTTP_INTEGRATION=I_UNDERSTAND_THIS_CREATES_TEST_ACCOUNTS \
+HOSPEDAE_TEST_BASE_URL=https://staging.exemplo.org/edijalmemoura/hospedae/ \
+npm run test:php:http
+```
+
+O ensaio verifica cookies/sessão e CSRF, cria duas contas/quartos, tenta aceder ao quarto de outra pousada, lança **dois pedidos de reserva em paralelo** e espera apenas um sucesso, verifica reservas privadas e bloqueios. **Não apaga as contas**: elimine a base descartável após o ensaio. Não o execute no site nem na base reais. Mesmo com o ensaio aprovado, é necessária validação adicional de concorrência com múltiplos trabalhadores PHP, pagamentos, privacidade e recuperação de conta. `npm run test:php:http:guard` testa localmente as restrições de endereço; **nenhum pedido HTTP remoto foi executado neste ambiente**.

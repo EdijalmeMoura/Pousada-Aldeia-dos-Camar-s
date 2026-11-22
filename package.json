@@ -13,7 +13,9 @@
     "test:supabase": "node scripts/supabase-integration.mjs",
     "package:hostinger": "python3 scripts/package_hostinger.py",
     "package:hostinger:demo": "python3 scripts/package_hostinger.py --demo",
-    "test:php:syntax": "node scripts/check-php.mjs"
+    "test:php:syntax": "node scripts/check-php.mjs",
+    "test:php:http": "node scripts/php-http-integration.mjs",
+    "test:php:http:guard": "node --test scripts/php-http-integration.node.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

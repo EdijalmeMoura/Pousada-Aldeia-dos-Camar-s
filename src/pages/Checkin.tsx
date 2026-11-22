@@ -55,7 +55,7 @@ export default function Checkin() {
     const next = [...msgs, { papel: "hospede" as const, texto }]
     setMsgs(next)
     try {
-      const resposta = await aiGenerate(`O hóspede respondeu: "${texto}". Continue o check-in conversacional: confirme os dados, pergunte a hora de chegada e pedidos especiais. Se já tiver dados suficientes, apresente as regras da casa e o código do quarto. Regras: ${profile?.regras_casa ?? ""}`)
+      const resposta = await aiGenerate(`O hóspede respondeu: "${texto}". Continue o check-in conversacional: confirme os dados, pergunte a hora de chegada e pedidos especiais. Se já tiver dados suficientes, apresente as regras da casa. Nunca invente códigos de acesso: o operador da pousada deve verificar e enviar o código real separadamente. Regras: ${profile?.regras_casa ?? ""}`)
       const updated = [...next, { papel: "ia" as const, texto: resposta }]
       setMsgs(updated)
       const concluiu = /código|regras/i.test(resposta)

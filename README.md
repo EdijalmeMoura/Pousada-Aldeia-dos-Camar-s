@@ -111,7 +111,7 @@ Consulte [docs/DEPLOY-HOSTINGER.md](docs/DEPLOY-HOSTINGER.md) para a sequência 
 
 ## Diagnóstico de segurança no Supabase
 
-Depois de aplicar as migrações `001`–`010`, execute `supabase/tests/production_checks.sql` no SQL Editor. O script verifica RLS, permissões `anon`, funções RPC e restrições/triggers essenciais sem alterar dados. Não foi executado neste repositório: é necessário um projeto Supabase real. O resultado não substitui ensaios de isolamento com duas contas e um hóspede anónimo.
+Depois de aplicar as migrações `001`–`011`, execute `supabase/tests/production_checks.sql` no SQL Editor. O script verifica RLS, permissões `anon`, funções RPC e restrições/triggers essenciais sem alterar dados. Não foi executado neste repositório: é necessário um projeto Supabase real. O resultado não substitui ensaios de isolamento com duas contas e um hóspede anónimo.
 
 ## Fotografias da pousada
 
@@ -124,3 +124,7 @@ Aplique `supabase/migrations/010_tenant_foreign_keys.sql` **após** a `009`. Cha
 ## Registo e onboarding
 
 O login pede apenas e-mail e palavra-passe; o nome pertence exclusivamente ao registo. `/onboarding` permite o acesso ao utilizador autenticado que ainda não concluiu a configuração, sem se redirecionar para si próprio. Quando Supabase Auth exigir confirmação de e-mail, o registo não assume que existe sessão: apresenta a indicação para confirmar a conta e iniciar sessão depois. No modo local, o botão de demonstração não é apresentado como OAuth Google real. Os testes verificam validação e destinos das rotas; o fluxo Supabase ainda precisa de teste com configuração de e-mail/OAuth no projeto real.
+
+## Proteção da IA
+
+Aplique `supabase/migrations/011_ai_quota.sql` depois da `010` e volte a publicar `ai-generate`. A função agora exige sessão Supabase válida, limita o tamanho dos pedidos e usa a quota atómica de 100 chamadas por conta e dia (UTC). Se a quota ou o serviço de IA não estiverem configurados, a função falha sem chamar o gateway. A chave `LOVABLE_API_KEY` permanece exclusivamente no servidor. A demonstração offline deixou de inventar códigos de acesso ou números de negócio; o operador deve verificar e enviar o código real do quarto. Isto não substitui revisão humana de dados sensíveis e respostas do modelo.

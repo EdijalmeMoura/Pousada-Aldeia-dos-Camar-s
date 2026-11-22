@@ -1,4 +1,4 @@
--- Execute no SQL Editor do projeto Supabase, DEPOIS das migrações 001–010.
+-- Execute no SQL Editor do projeto Supabase, DEPOIS das migrações 001–011.
 -- Leitura de catálogo apenas: não altera reservas, perfis ou outros dados.
 DO $checks$
 DECLARE
@@ -7,7 +7,7 @@ DECLARE
   missing text[] := ARRAY[]::text[];
 BEGIN
   FOREACH table_name IN ARRAY ARRAY[
-    'profiles','user_roles','quartos','tarifas','reservas','checkins','atividades','bloqueios'
+    'profiles','user_roles','quartos','tarifas','reservas','checkins','atividades','bloqueios','ai_usage'
   ] LOOP
     IF NOT EXISTS (
       SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
@@ -17,7 +17,7 @@ BEGIN
 
   -- Anónimos nunca devem consultar tabelas de proprietários nem inserir reservas diretamente.
   FOREACH table_name IN ARRAY ARRAY[
-    'profiles','user_roles','quartos','tarifas','reservas','checkins','atividades','bloqueios'
+    'profiles','user_roles','quartos','tarifas','reservas','checkins','atividades','bloqueios','ai_usage'
   ] LOOP
     IF has_table_privilege('anon', 'public.' || table_name, 'SELECT')
        OR has_table_privilege('anon', 'public.' || table_name, 'INSERT')
@@ -69,6 +69,12 @@ BEGIN
       missing := array_append(missing, 'Relação de isolamento entre proprietários ausente: ' || function_name);
     END IF;
   END LOOP;
+  IF to_regprocedure('public.consume_ai_quota(uuid)') IS NULL THEN
+    missing := array_append(missing, 'Função de quota de IA ausente');
+  ELSIF has_function_privilege('anon','public.consume_ai_quota(uuid)','EXECUTE')
+     OR has_function_privilege('authenticated','public.consume_ai_quota(uuid)','EXECUTE') THEN
+    missing := array_append(missing, 'Quota de IA executável pelo cliente');
+  END IF;
   IF NOT EXISTS (
     SELECT 1 FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
     WHERE c.relname = 'reservas' AND t.tgname = 'validar_cancelamento' AND NOT t.tgisinternal AND t.tgenabled <> 'D'

@@ -18,9 +18,9 @@ export function validateDeployment(env, root = process.cwd()) {
       errors.push(`${name}: variável potencialmente privada não pode ser incluída no frontend.`)
     }
   }
-  for (let n = 1; n <= 10; n++) {
+  for (let n = 1; n <= 11; n++) {
     const prefix = `${String(n).padStart(3, "0")}_`
-    const files = ['001_schema.sql', '002_public_booking.sql', '003_public_quote.sql', '004_manual_payment.sql', '005_infinitepay.sql', '006_payment_safety.sql', '007_calendar_blocks.sql', '008_cancellations.sql', '009_anon_table_grants.sql', '010_tenant_foreign_keys.sql']
+    const files = ['001_schema.sql', '002_public_booking.sql', '003_public_quote.sql', '004_manual_payment.sql', '005_infinitepay.sql', '006_payment_safety.sql', '007_calendar_blocks.sql', '008_cancellations.sql', '009_anon_table_grants.sql', '010_tenant_foreign_keys.sql', '011_ai_quota.sql']
     if (!existsSync(resolve(root, 'supabase/migrations', files[n - 1])) || !files[n - 1].startsWith(prefix)) errors.push(`Migração ${prefix} em falta.`)
   }
   if (!existsSync(resolve(root, 'public/.htaccess'))) errors.push('public/.htaccess em falta: rotas diretas podem devolver 404 na Hostinger.')

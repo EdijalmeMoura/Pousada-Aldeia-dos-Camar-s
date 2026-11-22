@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { getProfile, newProfile, saveProfile, type Profile } from "@/lib/db"
+import { hashDemoPassword, verifyDemoPassword, type DemoAccount } from "@/lib/demoCredentials"
 
 interface User { id: string; email: string; nome?: string }
 interface AuthCtx {
@@ -51,9 +52,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.user) { const u = { id: data.user.id, email, nome }; setUser(u); await loadProfile(u) }
       return
     }
-    const users = JSON.parse(localStorage.getItem("pousada_users_v1") ?? "[]")
-    if (users.some((x: any) => x.email === email)) throw new Error("Já existe uma conta com este e-mail. Faça login.")
-    const u = { id: crypto.randomUUID(), email, nome, password }
+    const users = JSON.parse(localStorage.getItem("pousada_users_v1") ?? "[]") as DemoAccount[]
+    if (users.some((x) => x.email === email)) throw new Error("Já existe uma conta com este e-mail. Faça login.")
+    const u = { id: crypto.randomUUID(), email, nome, ...(await hashDemoPassword(password)) }
     users.push(u); localStorage.setItem("pousada_users_v1", JSON.stringify(users))
     localStorage.setItem(LS_USER, JSON.stringify({ id: u.id, email, nome }))
     setUser({ id: u.id, email, nome }); await loadProfile({ id: u.id, email, nome })
@@ -66,9 +67,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.user) { const u = { id: data.user.id, email, nome: data.user.user_metadata?.nome }; setUser(u); await loadProfile(u) }
       return
     }
-    const users = JSON.parse(localStorage.getItem("pousada_users_v1") ?? "[]")
-    const found = users.find((x: any) => x.email === email && x.password === password)
-    if (!found) throw new Error("E-mail ou palavra-passe incorretos. Verifique e tente novamente.")
+    const users = JSON.parse(localStorage.getItem("pousada_users_v1") ?? "[]") as DemoAccount[]
+    const found = users.find((x) => x.email === email)
+    if (!found || !await verifyDemoPassword(found, password)) throw new Error("E-mail ou palavra-passe incorretos. Verifique e tente novamente.")
+    if (found.password !== undefined) {
+      users[users.indexOf(found)] = { id: found.id, email: found.email, nome: found.nome, ...(await hashDemoPassword(password)) }
+      localStorage.setItem("pousada_users_v1", JSON.stringify(users))
+    }
     localStorage.setItem(LS_USER, JSON.stringify({ id: found.id, email, nome: found.nome }))
     setUser({ id: found.id, email, nome: found.nome }); await loadProfile({ id: found.id, email, nome: found.nome })
   }

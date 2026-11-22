@@ -3,10 +3,10 @@ import { ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const faqs = [
-  { q: "Preciso de cartão para testar?", a: "Não. Os 7 dias de teste são gratuitos e sem cartão. Só paga se decidir continuar." },
-  { q: "Como recebo os pagamentos?", a: "Direto na sua conta, por PIX ou cartão. A plataforma não retém nem cobra comissão sobre reservas diretas." },
-  { q: "O check-in por IA substitui a receção?", a: "Substitui a burocracia: a IA recolhe dados, envia regras e o código do quarto. A receção fica para o que importa — acolher bem." },
-  { q: "Posso cancelar quando quiser?", a: "Sim, sem fidelização nem multas. O seu link público fica ativo enquanto a subscrição estiver válida." },
+  { q: "Preciso de cartão para testar?", a: "Não é necessário cartão para explorar a demonstração. A faturação de subscrições ainda não está ativa." },
+  { q: "Como recebo os pagamentos?", a: "Pode combinar uma cobrança manual por PIX ou link. O checkout InfinitePay, quando configurado no servidor, usa a conta própria da pousada." },
+  { q: "O check-in por IA substitui a receção?", a: "Ajuda a recolher dados e a preparar regras e código do quarto. A pousada deve confirmar a identidade e manter supervisão humana." },
+  { q: "Posso cancelar quando quiser?", a: "A gestão de subscrições ainda não está disponível. Pode deixar de usar a demonstração a qualquer momento; dados locais não são transferidos entre dispositivos." },
 ]
 
 export function Faq() {

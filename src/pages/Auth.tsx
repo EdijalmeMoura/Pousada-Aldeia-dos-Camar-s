@@ -6,6 +6,7 @@ import { z } from "zod"
 import { toast } from "sonner"
 import { Chrome, Loader2, MessageSquareText, Star, Wallet } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { isSupabaseConfigured } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -44,7 +45,7 @@ function AuthShell({ titulo, subtitulo, children }: { titulo: string; subtitulo:
             <CardTitle className="text-2xl">{titulo}</CardTitle>
             <CardDescription>{subtitulo}</CardDescription>
           </CardHeader>
-          <CardContent>{children}</CardContent>
+          <CardContent>{!isSupabaseConfigured && <p role="status" className="mb-4 rounded-xl bg-accent p-3 text-sm">Modo de demonstração: a conta e os dados ficam apenas neste navegador. Não reutilize uma palavra-passe pessoal nem introduza dados reais de hóspedes.</p>}{children}</CardContent>
         </Card>
       </div>
     </div>
@@ -96,7 +97,7 @@ export function Signup() {
   }
 
   return (
-    <AuthShell titulo="Crie a sua conta" subtitulo="7 dias grátis · Sem cartão · Sem compromisso">
+    <AuthShell titulo="Crie a sua conta" subtitulo={isSupabaseConfigured ? "Teste de 7 dias · Sem cartão" : "Demonstração local · Sem cartão"}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <div className="space-y-2"><Label htmlFor="nome">Nome</Label><Input id="nome" {...register("nome")} placeholder="O seu nome" />{errors.nome && <p className="text-sm text-destructive">{errors.nome.message}</p>}</div>
         <div className="space-y-2"><Label htmlFor="email">E-mail</Label><Input id="email" type="email" {...register("email")} placeholder="voce@pousada.pt" />{errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}</div>

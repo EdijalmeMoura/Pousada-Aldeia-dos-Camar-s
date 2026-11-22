@@ -71,7 +71,7 @@ export default function Quartos() {
 
   const saveT = useMutation({
     mutationFn: (data: TarifaForm) => dbInsert<Tarifa>("tarifas", { id: uid(), user_id: user!.id, ...data }),
-    onSuccess: async () => { await logActivity(user!.id, "tarifa", "Nova tarifa de temporada criada"); toast.success("Tarifa criada! O calendário foi sincronizado."); qc.invalidateQueries({ queryKey: ["tarifas"] }); setOpenT(false); tForm.reset() },
+    onSuccess: async () => { await logActivity(user!.id, "tarifa", "Nova tarifa de temporada criada"); toast.success("Tarifa criada! Tarifa guardada."); qc.invalidateQueries({ queryKey: ["tarifas"] }); setOpenT(false); tForm.reset() },
     onError: () => toast.error("Não foi possível criar a tarifa."),
   })
 
@@ -169,7 +169,7 @@ export default function Quartos() {
             </Dialog>
           </div>
           {tarifasQ.isLoading ? <Skeleton className="h-40" />
-            : (tarifasQ.data ?? []).length === 0 ? <Card><CardContent><EmptyState icon={BedDouble} titulo="Sem tarifas de temporada" subtitulo="Crie tarifas para a alta estação e mantenha o calendário sincronizado." cta="Criar tarifa" onCta={() => setOpenT(true)} /></CardContent></Card>
+            : (tarifasQ.data ?? []).length === 0 ? <Card><CardContent><EmptyState icon={BedDouble} titulo="Sem tarifas de temporada" subtitulo="Crie tarifas para a alta estação e mantenha os preços atualizados." cta="Criar tarifa" onCta={() => setOpenT(true)} /></CardContent></Card>
             : (
               <div className="grid gap-4 md:grid-cols-2">
                 {(tarifasQ.data ?? []).map((t) => {

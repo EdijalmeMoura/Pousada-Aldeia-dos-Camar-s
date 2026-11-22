@@ -37,7 +37,7 @@ export function Termos() {
     <Shell titulo="Termos de serviço">
       <p>Última atualização: 15 de novembro de 2026.</p>
       <h2 className="text-base font-semibold text-foreground">1. O serviço</h2>
-      <p>A Hospedaê disponibiliza uma plataforma de reserva direta para pousadas e aluguéis de temporada, com calendário sincronizado e check-in conversacional por IA.</p>
+      <p>A Hospedaê disponibiliza uma plataforma de reserva direta para pousadas e aluguéis de temporada, com calendário de disponibilidade e check-in conversacional por IA.</p>
       <h2 className="text-base font-semibold text-foreground">2. Planos e pagamento</h2>
       <p>Oferecemos 7 dias de teste grátis, sem cartão. Após o teste, os planos Essencial (R$149/mês) e Pro (R$299/mês) são faturados mensalmente. Pode cancelar a qualquer momento.</p>
       <h2 className="text-base font-semibold text-foreground">3. Responsabilidades</h2>

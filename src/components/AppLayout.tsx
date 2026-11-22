@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { Button } from "./ui/button"
 import { Avatar, AvatarFallback } from "./ui/avatar"
 import { ThemeToggle } from "./ThemeToggle"
+import { isSupabaseConfigured } from "@/lib/supabase"
 import { cn } from "@/lib/utils"
 
 const links = [
@@ -52,6 +53,7 @@ export function AppLayout() {
         </div>
         {open && <div className="border-t p-4 lg:hidden">{nav}</div>}
       </header>
+      {!isSupabaseConfigured && <p role="status" className="border-b bg-accent px-4 py-2 text-center text-xs text-accent-foreground">Modo de demonstração: os dados ficam apenas neste navegador. Não use dados reais de hóspedes.</p>}
       <div className="mx-auto flex max-w-7xl">
         <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-60 shrink-0 border-r bg-card/50 p-4 lg:block print:hidden">{nav}</aside>
         <main className="min-w-0 flex-1 p-4 md:p-6 print:p-0"><Outlet /></main>

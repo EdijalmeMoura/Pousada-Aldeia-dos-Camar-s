@@ -3,11 +3,11 @@ import { Card, CardContent } from "@/components/ui/card"
 
 const feats = [
   { icon: Link2, titulo: "Link direto de reserva", texto: "Um endereço bonito com a sua marca. Partilhe no Instagram, WhatsApp e Google — sem comissão." },
-  { icon: CalendarClock, titulo: "Calendário sincronizado", texto: "Disponibilidade e tarifas por temporada sempre atualizadas, sem conflito de reservas." },
+  { icon: CalendarClock, titulo: "Calendário de disponibilidade", texto: "Disponibilidade e tarifas por temporada geridas pela pousada, com bloqueios de datas." },
   { icon: KeyRound, titulo: "Check-in por IA", texto: "Conversa acolhedora que recolhe dados, envia regras e entrega o código do quarto." },
-  { icon: MessageCircle, titulo: "WhatsApp automático", texto: "Modelos de cobrança, lembrete e follow-up prontos a enviar com um clique." },
-  { icon: Wallet, titulo: "PIX e cartão", texto: "Pagamentos diretos, sem intermediários. A margem fica toda na sua conta." },
-  { icon: ShieldCheck, titulo: "Seguro e privado", texto: "Dados protegidos com RLS e encriptação. LGPD desde o primeiro dia." },
+  { icon: MessageCircle, titulo: "Mensagens WhatsApp manuais", texto: "Modelos de cobrança, lembrete e follow-up pré-preenchidos para rever e enviar." },
+  { icon: Wallet, titulo: "PIX e cartão", texto: "Cobrança manual ou checkout InfinitePay após configuração, na conta da pousada." },
+  { icon: ShieldCheck, titulo: "Seguro e privado", texto: "Isolamento entre pousadas via RLS quando o Supabase estiver configurado." },
 ]
 
 export function Features() {

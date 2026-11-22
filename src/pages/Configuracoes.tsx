@@ -74,17 +74,17 @@ export default function Configuracoes() {
         </TabsContent>
 
         <TabsContent value="plano">
-          <Card><CardHeader><CardTitle>Plano atual</CardTitle><CardDescription>Sem taxas escondidas. Cancele quando quiser.</CardDescription></CardHeader>
+          <Card><CardHeader><CardTitle>Plano e faturação</CardTitle><CardDescription>Planos indicativos. A cobrança de subscrição ainda não está disponível nesta versão.</CardDescription></CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap items-center gap-3">
                 <Badge variant="secondary" className="text-base">{profile.plano === "trial" ? "Teste grátis" : profile.plano}</Badge>
-                <p className="text-sm text-muted-foreground">{profile.plano === "trial" ? "7 dias grátis, sem cartão. Depois: R$149–299/mês." : "Subscrição ativa."}</p>
+                <p className="text-sm text-muted-foreground">{profile.plano === "trial" ? "Período de demonstração. Os preços indicados não constituem uma cobrança ativa." : "Estado interno da conta — faturação ainda não integrada."}</p>
               </div>
               <div className="grid gap-4 md:grid-cols-2">
                 {[{ nome: "Essencial", preco: "R$149/mês", atual: profile.plano === "essencial" }, { nome: "Pro", preco: "R$299/mês", atual: profile.plano === "pro" }].map((p) => (
                   <div key={p.nome} className="rounded-2xl border p-4">
                     <p className="font-semibold">{p.nome}</p><p className="text-2xl font-bold">{p.preco}</p>
-                    <Button className="mt-3 w-full" variant={p.atual ? "secondary" : "default"} disabled={p.atual} onClick={async () => { await saveProfile({ ...profile, plano: p.nome.toLowerCase() }); await refreshProfile(); toast.success(`Plano ${p.nome} ativado!`) }}>{p.atual ? "Plano atual" : "Escolher plano"}</Button>
+                    <p className="mt-3 text-xs text-muted-foreground">Adesão indisponível até integrar a faturação.</p>
                   </div>
                 ))}
               </div>

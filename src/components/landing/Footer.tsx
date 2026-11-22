@@ -9,7 +9,7 @@ export function Footer() {
       <section className="bg-hero-gradient">
         <div className="mx-auto max-w-7xl px-4 py-16 text-center text-white md:px-6 md:py-20">
           <h2 className="text-3xl font-bold md:text-4xl">Pronto para vender direto?</h2>
-          <p className="mx-auto mt-3 max-w-xl text-white/85">Junte-se a pousadas que já recuperaram a margem. Configuração em menos de 10 minutos.</p>
+          <p className="mx-auto mt-3 max-w-xl text-white/85">Prepare a sua pousada para reservas diretas com controlo de quartos, disponibilidade e hóspedes.</p>
           <Button size="lg" variant="secondary" className="mt-6 shadow-lg" asChild><Link to="/signup">Criar conta grátis <ArrowRight className="h-4 w-4" /></Link></Button>
         </div>
       </section>
@@ -19,7 +19,7 @@ export function Footer() {
           <nav className="flex gap-5" aria-label="Rodapé">
             <Link to="/privacidade" className="hover:text-primary">Privacidade</Link>
             <Link to="/termos" className="hover:text-primary">Termos</Link>
-            <span className="flex items-center gap-1"><ShieldCheck className="h-4 w-4" /> Pagamentos seguros</span>
+            <span className="flex items-center gap-1"><ShieldCheck className="h-4 w-4" /> Cobrança direta</span>
           </nav>
         </div>
       </footer>

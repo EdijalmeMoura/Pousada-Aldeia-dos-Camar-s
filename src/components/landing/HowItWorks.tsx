@@ -2,8 +2,8 @@ import { BedDouble, CalendarCheck, MessageSquareText } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 
 const steps = [
-  { icon: BedDouble, titulo: "Cadastre quartos e tarifas", texto: "Defina preços por temporada e sincronize o calendário. Em minutos, o seu link direto está no ar." },
-  { icon: CalendarCheck, titulo: "Hóspede reserva direto", texto: "Sem taxa de plataforma: o hóspede paga por PIX ou cartão e a margem fica toda sua." },
+  { icon: BedDouble, titulo: "Cadastre quartos e tarifas", texto: "Defina preços por temporada e gira o calendário. Em minutos, o seu link direto está no ar." },
+  { icon: CalendarCheck, titulo: "Hóspede reserva direto", texto: "Sem taxa de plataforma: combine o pagamento por PIX ou link e a margem fica toda sua." },
   { icon: MessageSquareText, titulo: "Check-in conversacional por IA", texto: "A IA recolhe os dados, envia as regras da casa e o código do quarto — sem fricção." },
 ]
 

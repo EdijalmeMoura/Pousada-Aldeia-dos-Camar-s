@@ -24,6 +24,7 @@ try {
     if (!is_array($config) || !isset($config['host'], $config['database'], $config['user'], $config['password'])) {
         throw new RuntimeException('Configuração incompleta');
     }
+    report(($config['environment'] ?? '') === 'staging', 'Backend configurado apenas para ensaio');
     report((bool)preg_match('/(?:^|_)test(?:_|$)/i', (string)$config['database']), 'Base explicitamente identificada como teste');
     if ($errors) exit(1);
     // Nunca imprimir valores da configuração nem o erro bruto da ligação.

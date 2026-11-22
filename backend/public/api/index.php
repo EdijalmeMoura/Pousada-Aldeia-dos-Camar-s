@@ -25,6 +25,9 @@ if (!$configPath || !is_file($configPath) || !realpath($configPath)
 }
 try {
     $config = require $configPath;
+    if (!is_array($config)) throw new RuntimeException('Configuração inválida.');
+    require_once __DIR__ . '/staging_guard.php';
+    requireStaging($config, $_SERVER);
     $pdo = new PDO(
         'mysql:host=' . $config['host'] . ';dbname=' . $config['database'] . ';charset=utf8mb4',
         $config['user'],

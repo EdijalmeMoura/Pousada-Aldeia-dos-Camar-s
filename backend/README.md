@@ -109,3 +109,7 @@ Após guardar os dados PIX/link privados, a lista de reservas permite preparar i
 ## Comunicação honesta no modo PHP
 
 A página inicial e o ecrã de acesso do build `VITE_BACKEND=php` mostram apenas capacidades do painel reduzido e identificam a instalação como ensaio. A página de privacidade e os termos deixam de afirmar que o PHP usa RLS, que cobra subscrições ou que dispõe de check-in IA; os textos são **informação provisória**, não uma política/contrato aprovado para operação real. Antes de receber hóspedes reais, a entidade responsável deve rever finalidade, conservação, pedidos LGPD, contactos válidos, pagamentos e termos com apoio jurídico adequado. Nunca anuncie cobrança automática que não foi integrada e testada.
+
+## Guarda de ensaio contra publicação acidental
+
+O PHP deste repositório **não tem modo de produção**. Antes de ligar ao MySQL, cada pedido exige `environment = staging`, base com segmento `test`, origem HTTPS num domínio separado de `projetoredesnordeste.com.br`, `HTTP_HOST` correspondente e `cookie_path` igual à subpasta `/test/` ou `/staging/` onde o endpoint está instalado. O exemplo privado foi atualizado para um domínio/base de ensaio. Se colocar o ZIP no site real ou o ligar à base real, o endpoint deve responder HTTP 503 sem criar contas/reservas. `backend/tests/staging_guard.php` é um teste de guarda por PHP CLI **sem base**; continua a não ter sido executado aqui, pois falta PHP. A barreira é adicional, não substitui isolamento de credenciais, HTTPS ou revisão antes de produção.

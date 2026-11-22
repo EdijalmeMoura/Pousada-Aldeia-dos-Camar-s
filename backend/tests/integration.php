@@ -13,7 +13,7 @@ if (!$path || !is_file($path) || !str_ends_with($path, '.php')) {
     exit(2);
 }
 $config = require $path;
-if (!is_array($config) || !preg_match('/(?:^|_)test(?:_|$)/i', (string)($config['database'] ?? ''))) {
+if (!is_array($config) || ($config['environment'] ?? '') !== 'staging' || !preg_match('/(?:^|_)test(?:_|$)/i', (string)($config['database'] ?? ''))) {
     fwrite(STDERR, "O nome da base de ensaio deve incluir o segmento test. Não usar produção.\n");
     exit(2);
 }

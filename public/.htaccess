@@ -1,7 +1,6 @@
 # React Router: encaminhar apenas rotas da aplicação para index.html.
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteBase /
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule ^ index.html [L]

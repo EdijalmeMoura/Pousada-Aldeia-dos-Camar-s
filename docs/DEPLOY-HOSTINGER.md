@@ -26,3 +26,7 @@ Depois das migrações `001`–`013` e do diagnóstico SQL, execute `npm run tes
 - `npm run package:hostinger` gera `artifacts/hospedae-hostinger-PRODUCAO.zip` **só** depois de `build:production` validar as variáveis públicas Supabase. Isto não comprova que o backend está configurado: siga as etapas anteriores antes de disponibilizar o domínio.
 - No Gestor de Ficheiros da Hostinger, carregue o ZIP para `public_html` e extraia-o **aí**, sem criar uma subpasta adicional. Confirme que `index.html`, `.htaccess`, `assets/`, `images/` e `LEIA-ME-INSTALACAO.txt` estão diretamente na raiz pública.
 - Os ZIPs em `artifacts/` são artefactos locais ignorados pelo Git; o código do instalador e os testes ficam no repositório. Nunca coloque segredos no ZIP nem no `public_html`.
+
+### Publicação numa subpasta (por exemplo, `/edijalmemoura/hospedae/`)
+
+O pacote anterior foi compilado para a raiz do domínio (`/`): nessa subpasta, o navegador procurava os scripts em `/assets/`, o que impede a aplicação de arrancar. **Não use esse ZIP antigo nessa localização.** Para gerar um build na subpasta, defina `VITE_BASE_PATH=/edijalmemoura/hospedae/` antes de `npm run package:hostinger` (e configure as variáveis públicas Supabase exigidas pelo build de produção). Extraia o conteúdo do ZIP na pasta `public_html/edijalmemoura/hospedae/`, não diretamente em `public_html`. Confirme que `index.html`, `.htaccess` e `assets/` ficam nessa mesma pasta. Registe também o URL completo dessa subpasta como URL de redirecionamento OAuth no Supabase. O prefixo deve começar e terminar com `/`.

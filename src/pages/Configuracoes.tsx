@@ -34,7 +34,7 @@ export default function Configuracoes() {
   const [copied, setCopied] = useState(false)
 
   if (!profile) return null
-  const publicUrl = `${location.origin}/${profile.slug}`
+  const publicUrl = new URL(`${import.meta.env.BASE_URL}${profile.slug}`, location.origin).href
 
   const save = async () => {
     if (infinitepayHandle && !/^[a-zA-Z0-9_-]{3,80}$/.test(infinitepayHandle)) { toast.error("InfiniteTag inválida: use apenas letras, números, hífen ou sublinhado."); return }

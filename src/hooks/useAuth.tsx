@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInGoogle = async () => {
     if (isSupabaseConfigured && supabase) {
-      const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: `${location.origin}/onboarding` } })
+      const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: new URL(`${import.meta.env.BASE_URL}onboarding`, location.origin).href } })
       if (error) throw error
       return
     }

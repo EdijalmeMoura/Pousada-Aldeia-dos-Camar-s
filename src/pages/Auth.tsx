@@ -18,7 +18,7 @@ function AuthShell({ titulo, subtitulo, children }: { titulo: string; subtitulo:
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="relative hidden overflow-hidden lg:block">
-        <img src="/images/hero.jpg" alt="Pousada à beira-mar" className="absolute inset-0 h-full w-full object-cover" />
+        <img src={`${import.meta.env.BASE_URL}images/hero.jpg`} alt="Pousada à beira-mar" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
         <div className="relative flex h-full flex-col justify-between p-10 text-white">
           <span className="flex items-center gap-2 font-bold"><BrandMark /> Hospedaê</span>

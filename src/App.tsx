@@ -35,7 +35,7 @@ export default function App() {
   return (
     <QueryClientProvider client={qc}>
       <AuthProvider>
-        <BrowserRouter>
+        <BrowserRouter basename={import.meta.env.BASE_URL}>
           <ErrorBoundary>
             <Suspense fallback={<Fallback />}>
               <Routes>

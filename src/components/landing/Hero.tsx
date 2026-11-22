@@ -8,7 +8,7 @@ export function Hero() {
   return (
     <section className="relative overflow-hidden">
       <div className="absolute inset-0">
-        <img src="/images/hero.jpg" alt="Pousada à beira-mar com piscina turquesa" className="h-full w-full object-cover" />
+        <img src={`${import.meta.env.BASE_URL}images/hero.jpg`} alt="Pousada à beira-mar com piscina turquesa" className="h-full w-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-background" />
       </div>
       <div className="relative mx-auto max-w-7xl px-4 pb-24 pt-20 text-center text-white md:px-6 md:pt-28">

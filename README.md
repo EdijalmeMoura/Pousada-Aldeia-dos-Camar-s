@@ -156,3 +156,7 @@ Em **Configurações → Atualizações**, contas com `user_roles.role = admin` 
 ## Pacote para Hostinger
 
 Para publicar uma **demonstração** no Premium Web Hosting, execute `npm run package:hostinger:demo` e extraia o ZIP produzido em `artifacts/` diretamente para `public_html`. O pacote inclui `.htaccess` e instruções. Para um pacote de produção, use `npm run package:hostinger`: este comando exige Supabase configurado no build e falha de propósito se faltar. Ambos os pacotes contêm apenas o frontend; o backend e a InfinitePay requerem configuração e testes à parte. Consulte `docs/DEPLOY-HOSTINGER.md`.
+
+## Alternativa sem Supabase (em desenvolvimento)
+
+Iniciada a migração para PHP + MySQL na Hostinger em `backend/README.md`. O esquema e o diagnóstico **não** substituem ainda o Supabase no frontend; o pacote de produção continua bloqueado até existir backend completo e validado. Não introduza dados reais no modo local.

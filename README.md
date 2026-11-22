@@ -140,3 +140,7 @@ Aplique `supabase/migrations/012_public_consent.sql` após a `011`. O formulári
 ## Slugs públicos seguros
 
 Aplique `supabase/migrations/013_reserved_slugs.sql` depois da `012`. O onboarding e as configurações rejeitam nomes que colidam com rotas internas (`/app`, `/login`, `/termos`, etc.) e mantêm links entre 3 e 40 caracteres. O botão **Copiar** partilha apenas o link já guardado, não um valor ainda por submeter. O banco mantém unicidade e a migração limita também o slug inicial gerado ao criar uma conta. Se existirem slugs antigos incompatíveis com a regra, reveja-os antes de aplicar a migração.
+
+## Formulário e navegação por teclado
+
+A reserva pública valida e explica datas de entrada/saída, limite de 90 noites, telefone e aceitação da privacidade; a lotação é limitada ao quarto selecionado. O botão de confirmar só fica ativo depois de obter uma cotação válida. Landing e área da pousada incluem ligação para saltar diretamente para o conteúdo e o menu móvel anuncia o estado aberto/fechado. Estas verificações no navegador complementam, mas não substituem, as validações das funções SQL.

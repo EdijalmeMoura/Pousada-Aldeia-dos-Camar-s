@@ -3,11 +3,11 @@ import { Link, useParams } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
 import { toast } from "sonner"
 import { BedDouble, CalendarCheck, Check, Loader2, ShieldCheck, Users } from "lucide-react"
 import { publicPousada, publicQuartos, createPublicBooking, quotePublicBooking, type PublicQuarto } from "@/lib/publicBooking"
 import { brl, useSeo } from "@/lib/utils"
+import { publicBookingSchema, type PublicBookingForm } from "@/lib/bookingValidation"
 import { isSupabaseConfigured } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,18 +17,6 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/EmptyState"
 import { RoomPhoto } from "@/components/RoomPhoto"
-
-const schema = z.object({
-  nome_hospede: z.string().min(2, "Indique o seu nome"),
-  email: z.string().email("Indique um e-mail válido"),
-  telefone: z.string().min(10, "Indique o telefone com DDD"),
-  check_in: z.string().min(1, "Escolha a data de entrada"),
-  check_out: z.string().min(1, "Escolha a data de saída"),
-  adultos: z.coerce.number().min(1, "Pelo menos 1 adulto"),
-  metodo_pagamento: z.enum(["pix", "cartao"]),
-  aceito_privacidade: z.boolean().refine(Boolean, "Aceite os termos e a política de privacidade para continuar."),
-})
-type Form = z.infer<typeof schema>
 
 export default function PublicBooking() {
   const { slug } = useParams<{ slug: string }>()
@@ -44,7 +32,7 @@ export default function PublicBooking() {
   })
   useSeo(profileQ.data ? `${profileQ.data.nome_pousada} — Reserve direto sem taxa` : "Reserva direta", "Reserve direto na pousada sem taxa de plataforma. Seleção de PIX ou cartão; pagamento sujeito à confirmação da pousada.")
 
-  const form = useForm<Form>({ resolver: zodResolver(schema), defaultValues: { metodo_pagamento: "pix", adultos: 2, aceito_privacidade: false } })
+  const form = useForm<PublicBookingForm>({ resolver: zodResolver(publicBookingSchema), defaultValues: { metodo_pagamento: "pix", adultos: 2, aceito_privacidade: false } })
 
   const entrada = form.watch("check_in")
   const saida = form.watch("check_out")
@@ -57,7 +45,7 @@ export default function PublicBooking() {
   })
 
   const book = useMutation({
-    mutationFn: async (data: Form) => {
+    mutationFn: async (data: PublicBookingForm) => {
       return createPublicBooking(slug!, profileQ.data!.id, selected!, data)
     },
     onSuccess: (r) => {
@@ -159,19 +147,21 @@ export default function PublicBooking() {
                     <div className="space-y-2"><Label htmlFor="telefone">Telefone</Label><Input id="telefone" {...form.register("telefone")} placeholder="81987654321" inputMode="numeric" />{form.formState.errors.telefone && <p className="text-sm text-destructive">{form.formState.errors.telefone.message}</p>}</div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="space-y-2"><Label htmlFor="check_in">Entrada</Label><Input id="check_in" type="date" min={new Date().toISOString().slice(0, 10)} {...form.register("check_in")} /></div>
-                    <div className="space-y-2"><Label htmlFor="check_out">Saída</Label><Input id="check_out" type="date" min={form.watch("check_in") || new Date().toISOString().slice(0, 10)} {...form.register("check_out")} /></div>
-                    <div className="space-y-2"><Label htmlFor="adultos">Adultos</Label><Input id="adultos" type="number" min={1} max={selected.capacidade} {...form.register("adultos")} /></div>
+                    <div className="space-y-2"><Label htmlFor="check_in">Entrada</Label><Input id="check_in" type="date" min={new Date().toISOString().slice(0, 10)} aria-invalid={Boolean(form.formState.errors.check_in)} {...form.register("check_in")} />{form.formState.errors.check_in && <p role="alert" className="text-sm text-destructive">{form.formState.errors.check_in.message}</p>}</div>
+                    <div className="space-y-2"><Label htmlFor="check_out">Saída</Label><Input id="check_out" type="date" min={form.watch("check_in") || new Date().toISOString().slice(0, 10)} aria-invalid={Boolean(form.formState.errors.check_out)} {...form.register("check_out")} />{form.formState.errors.check_out && <p role="alert" className="text-sm text-destructive">{form.formState.errors.check_out.message}</p>}</div>
+                    <div className="space-y-2"><Label htmlFor="adultos">Adultos</Label><Input id="adultos" type="number" min={1} max={selected.capacidade} aria-invalid={Boolean(form.formState.errors.adultos)} {...form.register("adultos")} />{form.formState.errors.adultos && <p role="alert" className="text-sm text-destructive">{form.formState.errors.adultos.message}</p>}</div>
                   </div>
+                  {Number(adultos) > selected.capacidade && <p role="alert" className="text-sm text-destructive">Este quarto aceita até {selected.capacidade} pessoa(s).</p>}
                   <div className="space-y-2"><Label htmlFor="metodo_pagamento">Pagamento</Label>
                     <select id="metodo_pagamento" {...form.register("metodo_pagamento")} className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-sm"><option value="pix">PIX</option><option value="cartao">Cartão</option></select>
                   </div>
+                  {(!entrada || !saida) && <p role="status" className="text-sm text-muted-foreground">Escolha as datas de entrada e saída para verificar a disponibilidade e ver o total.</p>}
                   {quoteQ.isFetching && <p className="text-center text-sm text-muted-foreground">A verificar disponibilidade e tarifa…</p>}
                   {quoteQ.isError && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-center text-sm text-destructive">{quoteQ.error instanceof Error ? quoteQ.error.message : "Não foi possível consultar a tarifa."}</p>}
                   {quoteQ.data && <p className="rounded-xl bg-accent p-3 text-center text-sm font-medium">{quoteQ.data.noites} noite(s) · Total: <strong>{brl(quoteQ.data.valor_total)}</strong> (sem taxa de plataforma)</p>}
                   <label className="flex items-start gap-2 text-sm"><input type="checkbox" {...form.register("aceito_privacidade")} className="mt-1" /> <span>Li e aceito os <Link to="/termos" target="_blank" rel="noreferrer" className="text-primary underline">Termos</Link> e a <Link to="/privacidade" target="_blank" rel="noreferrer" className="text-primary underline">Política de privacidade</Link> para esta reserva.</span></label>
                   {form.formState.errors.aceito_privacidade && <p role="alert" className="text-sm text-destructive">{form.formState.errors.aceito_privacidade.message}</p>}
-                  <Button type="submit" className="w-full" disabled={book.isPending || !quoteQ.data || quoteQ.isFetching}>{book.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Confirmar reserva direta</Button>
+                  <Button type="submit" className="w-full" disabled={book.isPending || !quoteQ.data || quoteQ.isFetching || Number(adultos) > selected.capacidade}>{book.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Confirmar reserva direta</Button>
                   <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4" /> Sem cobrança online · Pagamento combinado com a pousada</p>
                 </form>
               </CardContent>

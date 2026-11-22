@@ -35,10 +35,11 @@ export function AppLayout() {
   )
   return (
     <div className="min-h-screen bg-muted/30 print:bg-white">
+      <a href="#conteudo-principal" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-background focus:p-3 focus:text-foreground">Saltar para o conteúdo</a>
       <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur print:hidden">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-3">
-            <button className="rounded-xl p-2 hover:bg-accent lg:hidden" onClick={() => setOpen(!open)} aria-label="Abrir menu">{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
+            <button className="rounded-xl p-2 hover:bg-accent lg:hidden" onClick={() => setOpen(!open)} aria-label={open ? "Fechar menu" : "Abrir menu"} aria-expanded={open} aria-controls="menu-movel">{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
             <Link to="/app" className="flex items-center gap-2 font-bold tracking-tight">
               <BrandMark />
               <span className="hidden sm:inline">{profile?.nome_pousada || "Hospedaê"}</span>
@@ -51,12 +52,12 @@ export function AppLayout() {
             <Button variant="ghost" size="sm" aria-label="Sair" onClick={async () => { await signOut(); navigate("/") }}><LogOut className="h-4 w-4" /></Button>
           </div>
         </div>
-        {open && <div className="border-t p-4 lg:hidden">{nav}</div>}
+        {open && <div id="menu-movel" className="border-t p-4 lg:hidden">{nav}</div>}
       </header>
       {!isSupabaseConfigured && <p role="status" className="border-b bg-accent px-4 py-2 text-center text-xs text-accent-foreground">Modo de demonstração: os dados ficam apenas neste navegador. Não use dados reais de hóspedes.</p>}
       <div className="mx-auto flex max-w-7xl">
         <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-60 shrink-0 border-r bg-card/50 p-4 lg:block print:hidden">{nav}</aside>
-        <main className="min-w-0 flex-1 p-4 md:p-6 print:p-0"><Outlet /></main>
+        <main id="conteudo-principal" className="min-w-0 flex-1 p-4 md:p-6 print:p-0"><Outlet /></main>
       </div>
     </div>
   )

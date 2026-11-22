@@ -1,6 +1,6 @@
 # Migração para PHP + MySQL — blocos iniciais
 
-Este diretório **ainda não é um backend de produção**. Contém o esquema inicial, endpoints públicos experimentais e uma primeira implementação de contas com sessão. A aplicação React continua a usar Supabase ou demonstração local; **não publique reservas reais**. Não misture este esquema com as migrações PostgreSQL em `supabase/`.
+Este diretório **ainda não é um backend de produção**. Contém esquema, endpoints públicos e painel reduzido de contas, quartos e reservas; ainda não é um backend validado para produção. A aplicação React continua a usar Supabase ou demonstração local; **não publique reservas reais**. Não misture este esquema com as migrações PostgreSQL em `supabase/`.
 
 ## Preparação na Hostinger
 
@@ -8,7 +8,7 @@ Este diretório **ainda não é um backend de produção**. Contém o esquema in
 2. No servidor, coloque uma cópia de `private/config.example.php` como `config.php` **fora de `public_html`**, preenchendo as credenciais nesse ficheiro privado. Nunca carregue esse ficheiro para o Git ou para o ZIP público.
 3. Só depois de preparar o backend completo, coloque `public/api/index.php` na pasta `public_html/edijalmemoura/hospedae/api/`. O endpoint `/api/index.php?action=health` devolve apenas o estado de ligação, sem expor credenciais. As rotas `action=pousada`, `action=quartos` e `action=reservar` são **experimentais**: não devem ser publicadas sem autenticação, limites de taxa, política de privacidade e ensaio de concorrência no servidor.
 
-Aplique `sql/002_booking_code.sql` e `sql/003_auth_rate_limit.sql` após 001. O registo usa palavras-passe com `password_hash`, cookies Secure/HttpOnly/SameSite e tokens CSRF; requer HTTPS, `trusted_origin` e `cookie_path` corretos no ficheiro privado de configuração. A sessão é obtida com `GET ?action=session`; `POST ?action=register|login|logout` exige `Origin` correto e o token CSRF no cabeçalho `X-CSRF-Token`. O registo não dispõe ainda de verificação por e-mail nem recuperação de palavra-passe: não abrir o serviço ao público. A primeira implementação de reserva pública bloqueia o quarto (`SELECT ... FOR UPDATE`) antes de verificar conflitos. **Todas** as operações futuras de reserva e bloqueio, incluindo as manuais, devem usar a mesma disciplina de bloqueio. Ainda faltam testes de segurança e de sessão no PHP real, recuperação de conta, CRUD com isolamento por pousada, tarifas, pagamentos e integração no frontend; sem esses pontos não existe sistema real completo. Nenhuma migração ou endpoint PHP foi executado numa base real neste ambiente.
+Aplique `sql/002_booking_code.sql` e `sql/003_auth_rate_limit.sql` após 001. O registo usa palavras-passe com `password_hash`, cookies Secure/HttpOnly/SameSite e tokens CSRF; requer HTTPS, `trusted_origin` e `cookie_path` corretos no ficheiro privado de configuração. A sessão é obtida com `GET ?action=session`; `POST ?action=register|login|logout` exige `Origin` correto e o token CSRF no cabeçalho `X-CSRF-Token`. O registo não dispõe ainda de verificação por e-mail nem recuperação de palavra-passe: não abrir o serviço ao público. A primeira implementação de reserva pública bloqueia o quarto (`SELECT ... FOR UPDATE`) antes de verificar conflitos. **Todas** as operações futuras de reserva e bloqueio, incluindo as manuais, devem usar a mesma disciplina de bloqueio. Ainda faltam testes de segurança e de sessão no PHP real, recuperação de conta, funcionalidades internas avançadas, tarifas sazonais e pagamentos; sem esses pontos não existe sistema real completo. Nenhuma migração ou endpoint PHP foi executado numa base real neste ambiente.
 
 ## Operações internas experimentais
 
@@ -24,7 +24,7 @@ Aplique `sql/002_booking_code.sql` e `sql/003_auth_rate_limit.sql` após 001. O 
 
 ## Painel PHP reduzido no frontend
 
-No modo de build `VITE_BACKEND=php`, login, registo, consulta de sessão e saída usam a sessão PHP; o token CSRF é mantido apenas em memória. `/app` mostra só criação/listagem de quartos e reservas manuais/listagem; links de funcionalidades antigas não são exibidos. O nome introduzido no registo é o **nome da pousada**. A conta PHP ainda não tem confirmação de e-mail, recuperação de palavra-passe ou alterações/cancelamento de reservas. O pacote de produção PHP permanece indisponível até estas lacunas e o teste em MySQL real serem resolvidos.
+No modo de build `VITE_BACKEND=php`, login, registo, consulta de sessão e saída usam a sessão PHP; o token CSRF é mantido apenas em memória. `/app` mostra só criação/listagem de quartos e reservas manuais/listagem; links de funcionalidades antigas não são exibidos. O nome introduzido no registo é o **nome da pousada**. A conta PHP ainda não tem confirmação de e-mail ou recuperação de palavra-passe; o painel já permite cancelar reservas e bloquear/remover datas, mas não alterar reservas. O pacote de produção PHP permanece indisponível até estas lacunas e o teste em MySQL real serem resolvidos.
 
 ## Cancelamentos e bloqueios — migração 004
 
@@ -61,3 +61,7 @@ O ensaio verifica cookies/sessão e CSRF, cria duas contas/quartos, tenta aceder
 ## Pacote de ensaio para Hostinger (não é produção)
 
 Com `VITE_BASE_PATH=/test/ npm run package:php:staging`, o projeto gera `artifacts/hospedae-PHP-ENSAIO.zip`. Extraia-o somente na subpasta `/test/` de **um domínio de ensaio separado**, nunca no domínio real. O comando recusa a raiz e caminhos sem segmento final `/test/` ou `/staging/`, e impede a inclusão de variáveis Supabase no build. O ZIP inclui apenas frontend e `backend/public/api/*.php`, sem credenciais ou SQL; as migrações 001–004 e o ficheiro `config.php` privado são preparados separadamente. No servidor PHP, `HOSPEDAE_CONFIG_PATH` precisa de apontar para o caminho absoluto de `config.php` fora de `public_html`. Verifique se a sua configuração Hostinger permite definir essa variável de ambiente e se PHP 8.2+ com PDO MySQL está disponível. Não use esta versão com hóspedes reais. O ZIP local está ignorado pelo Git.
+
+## Diagnóstico read-only da instalação de ensaio
+
+Antes dos ensaios funcionais, no servidor de **testes**, corra `HOSPEDAE_TEST_CONFIG_PATH=/caminho/privado/config.php php backend/tests/diagnostic.php` por **PHP CLI**. O script verifica PHP 8.2+, extensões `pdo_mysql` e `mbstring`, configuração fora de `public_html`, base com `test` no nome, ligação, motor InnoDB, colunas das migrações 001–004, restrições `CHECK`, chaves estrangeiras e índices únicos. Não faz escrita nem mostra segredos. Um resultado «OK» **não** valida concorrência, sessões ou pagamentos. Nunca carregue `backend/tests/` para a pasta pública.

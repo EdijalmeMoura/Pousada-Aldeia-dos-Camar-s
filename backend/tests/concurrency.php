@@ -73,7 +73,13 @@ try {
         if ((int)$query->fetchColumn() >= 2) break;
         usleep(50000);
     } while (microtime(true) < $deadline);
-    if (microtime(true) >= $deadline) throw new RuntimeException('Os processos não chegaram ao bloqueio a tempo.');
+    if (microtime(true) >= $deadline) {
+        $states = [];
+        foreach ($workers as [$process, $pipes]) {
+            $states[] = proc_get_status($process)['running'] ? 'a aguardar' : 'terminou';
+        }
+        throw new RuntimeException('Os processos não chegaram ao bloqueio a tempo: ' . implode(', ', $states));
+    }
     $db->commit();
     $outputs = [];
     foreach ($workers as [$process, $pipes]) {

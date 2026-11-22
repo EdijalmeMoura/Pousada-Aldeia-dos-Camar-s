@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -6,7 +7,7 @@ import { z } from "zod"
 import { toast } from "sonner"
 import { format, parseISO } from "date-fns"
 import { pt as ptPT } from "date-fns/locale"
-import { CalendarCheck, CreditCard, Loader2, MessageCircle, Plus, Trash2 } from "lucide-react"
+import { CalendarCheck, CreditCard, FileText, Loader2, MessageCircle, Plus, Trash2 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { dbDelete, dbInsert, dbList, dbUpdate, logActivity, type Quarto, type Reserva } from "@/lib/db"
 import { waLink, supabase } from "@/lib/supabase"
@@ -171,6 +172,7 @@ export default function Reservas() {
                         <TableCell className="text-right font-medium">{brl(r.valor_total)}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
+                            {["confirmada", "concluida"].includes(r.estado) && <Button variant="ghost" size="icon" aria-label="Ver confirmação de estadia" title="Ver confirmação de estadia" asChild><Link to={`/app/reservas/${r.id}/confirmacao`}><FileText className="h-4 w-4 text-primary" /></Link></Button>}
                             {profile?.infinitepay_handle && r.pagamento_estado !== "pago" && <Button variant="ghost" size="icon" aria-label="Copiar link InfinitePay" disabled={checkout.isPending} onClick={() => checkout.mutate(r.id)}><CreditCard className="h-4 w-4 text-primary" /></Button>}
                             <Button variant="ghost" size="icon" aria-label="Enviar dados de pagamento ao hóspede por WhatsApp" asChild>
                               <a href={waLink(r.telefone, paymentMessage(r, { nome_pousada: profile?.nome_pousada || "Pousada", chave_pix: profile?.chave_pix || "", link_pagamento: profile?.link_pagamento || "" }))} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4 text-primary" /></a>

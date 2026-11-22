@@ -88,3 +88,7 @@ Aplique `supabase/migrations/007_calendar_blocks.sql` depois da `006`. Em **/app
 ## Exportação de reservas
 
 Na página **Reservas**, o proprietário pode descarregar CSV filtrado por data de entrada e estado, para gestão e reconciliação. O ficheiro é gerado no navegador com os dados já autorizados para a conta; não é enviado a serviços terceiros. As células de texto são protegidas contra fórmulas de folhas de cálculo. O CSV contém dados pessoais: guarde-o em local seguro e elimine cópias de que já não necessita. Reservas marcadas como **Pago (verificado)** não podem ser eliminadas pela interface nem pela política de base de dados da migração `006_payment_safety.sql`.
+
+## Confirmação de estadia (envio manual)
+
+Quando a pousada define uma reserva como confirmada, a página **Reservas** disponibiliza uma confirmação em `/app/reservas/:id/confirmacao`. Pode imprimi-la ou preparar uma mensagem por e-mail/WhatsApp para o hóspede. O documento só existe para reservas confirmadas ou concluídas, indica separadamente se o pagamento foi verificado e **não é recibo fiscal nem comprovativo do prestador**. Não existe envio automático: o operador revê e envia a mensagem na aplicação escolhida. A rota exige sessão do proprietário e a consulta respeita RLS no Supabase.

@@ -15,6 +15,7 @@ const Onboarding = lazy(() => import("@/pages/Onboarding"))
 const Dashboard = lazy(() => import("@/pages/Dashboard"))
 const Quartos = lazy(() => import("@/pages/Quartos"))
 const Calendario = lazy(() => import("@/pages/Calendario"))
+const Confirmacao = lazy(() => import("@/pages/Confirmacao"))
 const Reservas = lazy(() => import("@/pages/Reservas"))
 const Checkin = lazy(() => import("@/pages/Checkin"))
 const Configuracoes = lazy(() => import("@/pages/Configuracoes"))
@@ -47,6 +48,7 @@ export default function App() {
                   <Route index element={<Dashboard />} />
                   <Route path="quartos" element={<Quartos />} />
                   <Route path="reservas" element={<Reservas />} />
+                  <Route path="reservas/:id/confirmacao" element={<Confirmacao />} />
                   <Route path="calendario" element={<Calendario />} />
                   <Route path="checkin" element={<Checkin />} />
                 </Route>

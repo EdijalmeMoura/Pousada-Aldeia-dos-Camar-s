@@ -32,8 +32,8 @@ export function AppLayout() {
     </nav>
   )
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur">
+    <div className="min-h-screen bg-muted/30 print:bg-white">
+      <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur print:hidden">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
           <div className="flex items-center gap-3">
             <button className="rounded-xl p-2 hover:bg-accent lg:hidden" onClick={() => setOpen(!open)} aria-label="Abrir menu">{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
@@ -52,8 +52,8 @@ export function AppLayout() {
         {open && <div className="border-t p-4 lg:hidden">{nav}</div>}
       </header>
       <div className="mx-auto flex max-w-7xl">
-        <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-60 shrink-0 border-r bg-card/50 p-4 lg:block">{nav}</aside>
-        <main className="min-w-0 flex-1 p-4 md:p-6"><Outlet /></main>
+        <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-60 shrink-0 border-r bg-card/50 p-4 lg:block print:hidden">{nav}</aside>
+        <main className="min-w-0 flex-1 p-4 md:p-6 print:p-0"><Outlet /></main>
       </div>
     </div>
   )

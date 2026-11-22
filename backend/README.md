@@ -81,3 +81,7 @@ Aplique `sql/005_session_version.sql` depois de 001–004 **antes** de publicar 
 ## Confirmação operacional — migração 006
 
 Aplique `sql/006_confirmation.sql` depois de 001–005. `POST ?action=confirm-booking` recebe o `id` da reserva, exige sessão/CSRF e só confirma uma reserva **pendente** da pousada da sessão cuja estadia ainda não terminou. Guarda `confirmada_em`, preserva o valor original e bloqueia o quarto durante a alteração. Uma segunda confirmação e pedidos de outra pousada são recusados; o ensaio HTTP cobre os dois casos. **Confirmar estadia não significa que o pagamento foi recebido**, nem envia mensagens ao hóspede. Sem integração de pagamento, combine e verifique cobranças fora do sistema.
+
+## Contacto manual e exportação no painel PHP
+
+A lista de reservas mostra o contacto do hóspede e, apenas após confirmar a estadia, permite **preparar** uma mensagem no e-mail ou WhatsApp do operador. Nada é enviado automaticamente e a mensagem diz explicitamente que o pagamento não foi verificado na plataforma. O botão CSV exporta as reservas carregadas no navegador, incluindo dados pessoais; as células são protegidas contra fórmulas de folhas de cálculo. Proteja o ficheiro descarregado e partilhe-o apenas com pessoas autorizadas. Não existe ainda registo de envio no servidor, nem prova de entrega da mensagem.

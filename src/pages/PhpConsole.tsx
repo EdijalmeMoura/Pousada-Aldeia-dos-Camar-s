@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { BookingList } from "@/components/php/BookingList"
 import { PasswordSettings } from "@/components/php/PasswordSettings"
 import { RoomEditor } from "@/components/php/RoomEditor"
 import { PousadaSettings } from "@/components/php/PousadaSettings"
@@ -9,21 +10,20 @@ import { CalendarOperations } from "@/components/php/CalendarOperations"
 import { useAuth } from "@/hooks/useAuth"
 import { phpRequest } from "@/lib/phpBackend"
 import { phpWrite } from "@/lib/phpAuth"
-import { brl } from "@/lib/utils"
+import type { PhpBooking } from "@/lib/phpBookingOperations"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type Room = { id: string; nome: string; capacidade: number; preco_base: number; ativo: number | boolean }
-type Booking = { id: string; quarto_id: string; nome_hospede: string; check_in: string; check_out: string; estado: string; valor_total: number; codigo_reserva: string }
 
 export default function PhpConsole() {
   const { profile, signOut } = useAuth()
   const navigate = useNavigate()
   const qc = useQueryClient()
   const rooms = useQuery({ queryKey: ["php-rooms"], queryFn: () => phpRequest<Room[]>("my-rooms") })
-  const bookings = useQuery({ queryKey: ["php-bookings"], queryFn: () => phpRequest<Booking[]>("my-bookings") })
+  const bookings = useQuery({ queryKey: ["php-bookings"], queryFn: () => phpRequest<PhpBooking[]>("my-bookings") })
   const [busy, setBusy] = useState(false)
   const [room, setRoom] = useState({ nome: "", capacidade: 2, preco_base: "" })
   const [booking, setBooking] = useState({ quarto_id: "", nome_hospede: "", email: "", telefone: "", check_in: "", check_out: "", adultos: 2, metodo_pagamento: "pix" })
@@ -42,16 +42,6 @@ export default function PhpConsole() {
       await qc.invalidateQueries({ queryKey: ["php-bookings"] }); toast.success("Reserva registada")
       setBooking({ ...booking, nome_hospede: "", email: "", telefone: "", check_in: "", check_out: "" })
     } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível criar a reserva") }
-    finally { setBusy(false) }
-  }
-  const confirmBooking = async (id: string) => {
-    if (!window.confirm("Confirmar esta reserva? Esta ação NÃO confirma o pagamento nem envia mensagem ao hóspede.")) return
-    setBusy(true)
-    try {
-      await phpWrite("confirm-booking", { id })
-      await qc.invalidateQueries({ queryKey: ["php-bookings"] })
-      toast.success("Estadia confirmada. Contacte o hóspede manualmente; não foi confirmada nenhuma cobrança.")
-    } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível confirmar") }
     finally { setBusy(false) }
   }
   return <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-8">
@@ -76,6 +66,6 @@ export default function PhpConsole() {
       </CardContent></Card>
     </div>
     <CalendarOperations rooms={rooms.data ?? []} bookings={bookings.data ?? []} />
-    <Card><CardHeader><CardTitle>Reservas registadas</CardTitle></CardHeader><CardContent><ul className="space-y-2">{bookings.data?.map(r => <li key={r.id} className="rounded-lg border p-3 text-sm"><strong>{r.codigo_reserva}</strong> · {r.nome_hospede} · {r.check_in} a {r.check_out} · {brl(Number(r.valor_total))} · {r.estado} {r.estado === "pendente" && <Button variant="outline" size="sm" className="ml-2" disabled={busy} onClick={() => confirmBooking(r.id)}>Confirmar estadia</Button>}</li>)}</ul></CardContent></Card>
+    <BookingList bookings={bookings.data ?? []} rooms={rooms.data ?? []} pousada={profile?.nome_pousada ?? ""} />
   </main>
 }

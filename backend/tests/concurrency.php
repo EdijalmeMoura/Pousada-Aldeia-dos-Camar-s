@@ -29,6 +29,8 @@ $input = ['slug' => $slug, 'quarto_id' => $room, 'nome_hospede' => 'Hóspede Ens
     'check_out' => $end, 'adultos' => 2, 'metodo_pagamento' => 'pix', 'aceito_privacidade' => true];
 if (($argv[1] ?? '') === 'worker') {
     $input = json_decode((string)getenv('HOSPEDAE_CONCURRENCY_INPUT'), true, 512, JSON_THROW_ON_ERROR);
+    echo "PRONTO\n";
+    flush();
     try {
         createPublicBooking($db, $input, ($argv[2] ?? '') === 'manual');
         echo "CRIADA\n";
@@ -65,21 +67,15 @@ try {
         fclose($pipes[0]);
         $workers[] = [$process, $pipes];
     }
-    // Aguarda ambos ficarem à espera da linha, sem temporização arbitrária.
-    $deadline = microtime(true) + 10;
-    do {
-        $query = $db->prepare("SELECT COUNT(*) FROM information_schema.INNODB_TRX WHERE trx_query LIKE '%FOR UPDATE%'");
-        $query->execute();
-        if ((int)$query->fetchColumn() >= 2) break;
-        usleep(50000);
-    } while (microtime(true) < $deadline);
-    if (microtime(true) >= $deadline) {
-        $states = [];
-        foreach ($workers as [$process, $pipes]) {
-            $states[] = proc_get_status($process)['running'] ? 'a aguardar' : 'terminou';
+    // Ambos os trabalhadores anunciaram que vão tentar o mesmo quarto.
+    foreach ($workers as [, $pipes]) {
+        stream_set_timeout($pipes[1], 10);
+        if (trim((string)fgets($pipes[1])) !== 'PRONTO') {
+            throw new RuntimeException('Um dos processos não chegou à reserva.');
         }
-        throw new RuntimeException('Os processos não chegaram ao bloqueio a tempo: ' . implode(', ', $states));
     }
+    // A linha permanece bloqueada até ambos terem arrancado.
+    usleep(200000);
     $db->commit();
     $outputs = [];
     foreach ($workers as [$process, $pipes]) {

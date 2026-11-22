@@ -70,8 +70,6 @@ jobs:
             echo "::error title=Ensaio PHP MySQL::$(tail -n 5 /tmp/hospedae-integration.log | tr '\n' ' ' | cut -c1-500)"
             exit 1
           }
-          MYSQL_PWD=ci-only-root-password mysql --host=127.0.0.1 --user=root \
-            -e "GRANT PROCESS ON *.* TO 'hospedae_ci'@'%';"
           php backend/tests/concurrency.php 2>&1 | tee /tmp/hospedae-concurrency.log || {
             echo "::error title=Concorrência PHP MySQL::$(tail -n 5 /tmp/hospedae-concurrency.log | tr '\n' ' ' | cut -c1-500)"
             exit 1

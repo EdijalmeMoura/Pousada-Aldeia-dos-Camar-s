@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { getProfile, newProfile, saveProfile, type Profile } from "@/lib/db"
 import { isPhpBackend } from "@/lib/phpBackend"
@@ -18,6 +19,7 @@ const Ctx = createContext<AuthCtx | null>(null)
 const LS_USER = "pousada_user_v1"
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient()
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
@@ -34,6 +36,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!p) { p = newProfile(u); await saveProfile(p) }
     setProfile(p)
   }
+
+  useEffect(() => {
+    if (!isPhpBackend) return
+    const revoke = () => { clearPhpSession(); queryClient.clear(); setPhpAccount(null) }
+    window.addEventListener("hospedae:php-unauthorized", revoke)
+    return () => window.removeEventListener("hospedae:php-unauthorized", revoke)
+  }, [queryClient])
 
   useEffect(() => {
     ;(async () => {
@@ -60,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, nome: string) => {
     if (isPhpBackend) {
       const result = await phpWrite<{ account: PhpAccount }>("register", { email, password, nome_pousada: nome })
+      queryClient.clear()
       setPhpAccount(result.account)
       return true
     }
@@ -82,6 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     if (isPhpBackend) {
       const result = await phpWrite<{ account: PhpAccount }>("login", { email, password })
+      queryClient.clear()
       setPhpAccount(result.account)
       return
     }
@@ -119,6 +130,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isPhpBackend) {
       await phpWrite("logout", {})
       clearPhpSession()
+      queryClient.clear()
       setPhpAccount(null)
       return
     }

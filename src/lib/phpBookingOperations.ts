@@ -3,7 +3,7 @@ import { brl } from "./utils"
 
 export type PhpBooking = {
   id: string; quarto_id: string; codigo_reserva: string; nome_hospede: string; email: string; telefone: string
-  check_in: string; check_out: string; adultos: number; estado: string; metodo_pagamento: string
+  check_in: string; check_out: string; adultos: number; estado: string; metodo_pagamento: "pix" | "cartao"
   valor_total: number; confirmada_em: string | null; motivo_cancelamento: string | null
 }
 

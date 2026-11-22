@@ -22,3 +22,13 @@ describe("reservas do painel PHP", () => {
     expect(() => phpConfirmationMessage({ ...booking, estado: "pendente" }, "Pousada", "Quarto")).toThrow()
   })
 })
+
+describe("cobrança manual da pousada PHP", () => {
+  it("prepara instruções PIX da própria pousada sem confirmar pagamento", async () => {
+    const { paymentMessage } = await import("./manualPayment")
+    const text = paymentMessage(booking, { nome_pousada: "Pousada A", chave_pix: "pix@pousada-a.pt", link_pagamento: "" })
+    expect(text).toContain("pix@pousada-a.pt")
+    expect(text).toContain("A confirmação será feita pela pousada após verificação")
+    expect(text).not.toContain("pagamento confirmado")
+  })
+})

@@ -14,6 +14,7 @@ export async function phpRequest<T>(action: string, params: Record<string, strin
   })
   let result: unknown
   try { result = await response.json() } catch { throw new Error("O servidor de reservas não respondeu corretamente.") }
+  if (response.status === 401 && typeof window !== "undefined") window.dispatchEvent(new Event("hospedae:php-unauthorized"))
   if (!response.ok) {
     const message = result && typeof result === "object" && "error" in result && typeof result.error === "string"
       ? result.error : "Não foi possível contactar o servidor de reservas."

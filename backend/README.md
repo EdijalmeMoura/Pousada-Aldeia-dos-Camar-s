@@ -101,3 +101,7 @@ O ficheiro privado `config.php` precisa agora de `php_timezone` e `mysql_time_of
 ## Cobrança manual privada — migração 007
 
 Aplique `sql/007_manual_payment.sql` após 001–006. `GET ?action=my-payment-settings` e `POST ?action=update-payment-settings` consultam/guardam **apenas para a pousada da sessão** uma chave PIX opcional e um link HTTPS opcional. O servidor recusa links HTTP, com credenciais no URL, IPs ou destinos `.local`/`.internal`. Estes campos **não são segredos de API** nem são devolvidos pela reserva pública. Não há checkout InfinitePay, cobrança automática ou prova de pagamento: cada pousada deve confirmar qualquer pagamento pelos seus próprios canais e nunca marcar «pago» por mera criação da reserva. O ensaio HTTP verifica o isolamento e a rejeição de links inseguros.
+
+## Mensagens de cobrança manual e isolamento de sessão
+
+Após guardar os dados PIX/link privados, a lista de reservas permite preparar instruções por e-mail ou WhatsApp apenas para reservas pendentes ou confirmadas. O operador revê e envia manualmente; nenhum botão cria checkout, cobra dinheiro ou altera o estado do pagamento. O texto usa os dados da **pousada autenticada**, não os de outras contas. Ao entrar, criar outra conta, sair ou receber HTTP 401, o frontend apaga a cache de consultas (incluindo reservas e dados de cobrança) para evitar mostrar dados antigos de outra pousada no mesmo navegador. O ensaio PHP/MySQL remoto ainda é obrigatório antes de usar dados reais.

@@ -16,6 +16,17 @@ describe("cliente PHP", () => {
     expect(options.credentials).toBe("same-origin")
   })
 
+  it("avisa a interface quando a sessão PHP expira", async () => {
+    vi.stubGlobal("location", { origin: "https://example.org" })
+    const target = new EventTarget()
+    vi.stubGlobal("window", target)
+    const revoked = vi.fn()
+    target.addEventListener("hospedae:php-unauthorized", revoked)
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ status: 401, ok: false, json: async () => ({ error: "Autenticação necessária." }) }))
+    await expect(phpRequest("my-bookings")).rejects.toThrow("Autenticação necessária")
+    expect(revoked).toHaveBeenCalledOnce()
+  })
+
   it("falha visivelmente quando o servidor devolve erro ou HTML", async () => {
     vi.stubGlobal("location", { origin: "https://example.org" })
     vi.stubGlobal("fetch", vi.fn().mockResolvedValueOnce({ ok: false, json: async () => ({ error: "Quarto indisponível" }) })

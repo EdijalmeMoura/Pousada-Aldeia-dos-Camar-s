@@ -28,6 +28,25 @@ function operation(PDO $db, string $action, array $config): array {
     requireSameOrigin($config['trusted_origin'] ?? '');
     $body = authBody();
     requireCsrf($body);
+    if ($action === 'update-pousada') {
+        $name = trim((string)($body['nome'] ?? ''));
+        $slug = (string)($body['slug'] ?? '');
+        $reserved = ['app', 'signup', 'login', 'onboarding', 'configuracoes', 'privacidade', 'termos', 'api', 'assets', 'images', 'favicon', 'robots', 'sitemap'];
+        if (mb_strlen($name) < 2 || mb_strlen($name) > 160
+            || strlen($slug) < 3 || strlen($slug) > 40
+            || !preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $slug)
+            || in_array($slug, $reserved, true)) {
+            throw new InvalidArgumentException('Nome ou link público inválido. Use 3 a 40 caracteres minúsculos, números e hífen, sem rotas reservadas.');
+        }
+        try {
+            $update = $db->prepare('UPDATE pousadas SET nome = ?, slug = ? WHERE id = UNHEX(?) AND owner_id = UNHEX(?)');
+            $update->execute([$name, $slug, $tenant, $account['id']]);
+        } catch (PDOException $error) {
+            if ($error->getCode() === '23000') throw new DomainException('Este link já está em uso por outra pousada.');
+            throw $error;
+        }
+        return ['nome_pousada' => $name, 'slug' => $slug];
+    }
     if ($action === 'add-room') {
         $name = trim((string)($body['nome'] ?? ''));
         $capacity = filter_var($body['capacidade'] ?? null, FILTER_VALIDATE_INT);

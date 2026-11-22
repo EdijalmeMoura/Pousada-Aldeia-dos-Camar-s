@@ -65,3 +65,7 @@ Com `VITE_BASE_PATH=/test/ npm run package:php:staging`, o projeto gera `artifac
 ## Diagnóstico read-only da instalação de ensaio
 
 Antes dos ensaios funcionais, no servidor de **testes**, corra `HOSPEDAE_TEST_CONFIG_PATH=/caminho/privado/config.php php backend/tests/diagnostic.php` por **PHP CLI**. O script verifica PHP 8.2+, extensões `pdo_mysql` e `mbstring`, configuração fora de `public_html`, base com `test` no nome, ligação, motor InnoDB, colunas das migrações 001–004, restrições `CHECK`, chaves estrangeiras e índices únicos. Não faz escrita nem mostra segredos. Um resultado «OK» **não** valida concorrência, sessões ou pagamentos. Nunca carregue `backend/tests/` para a pasta pública.
+
+## Nome e link público no painel PHP
+
+`POST ?action=update-pousada` recebe `nome` e `slug`, exige sessão, `Origin` e CSRF, atualiza apenas a pousada do proprietário e rejeita slugs reservados ou já usados. O slug é validado no servidor com 3–40 caracteres minúsculos, números ou hífen. O ensaio HTTP também verifica a rejeição de duplicados e a desativação do link antigo. **Alterar o link antigo pode quebrar reservas partilhadas:** avise os hóspedes antes de o mudar. Não há redirecionamento automático nem histórico de slugs nesta fase.

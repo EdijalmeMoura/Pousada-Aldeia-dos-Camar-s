@@ -66,6 +66,17 @@ async function run() {
     check(response.status === 200 && /^[0-9a-f]{32}$/i.test(response.result.id), `criar quarto ${name}`)
     return response.result.id
   }
+  const renamedSlug = `test-${randomBytes(6).toString('hex')}`
+  const renamed = await call('update-pousada', { session: a, body: { nome: 'Pousada de ensaio renomeada', slug: renamedSlug } })
+  check(renamed.status === 200 && renamed.result.slug === renamedSlug, 'alterar link público da própria pousada')
+  const oldPage = await call('pousada', { params: { slug: a.account.slug } })
+  const newPage = await call('pousada', { params: { slug: renamedSlug } })
+  check(oldPage.status === 200 && oldPage.result === null && newPage.result?.slug === renamedSlug, 'link antigo deixa de resolver')
+  a.account.slug = renamedSlug
+  const reserved = await call('update-pousada', { session: b, body: { nome: 'Outra pousada', slug: 'login' } })
+  check(reserved.status === 400, 'rota interna reservada rejeitada')
+  const duplicate = await call('update-pousada', { session: b, body: { nome: 'Outra pousada', slug: renamedSlug } })
+  check(duplicate.status === 409, 'slug de outra pousada rejeitado')
   const roomA = await addRoom(a, 'Quarto A')
   const roomB = await addRoom(b, 'Quarto B')
   const roomsA = await call('my-rooms', { session: a })

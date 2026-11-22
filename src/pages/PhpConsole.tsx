@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { PousadaSettings } from "@/components/php/PousadaSettings"
 import { CalendarOperations } from "@/components/php/CalendarOperations"
 import { useAuth } from "@/hooks/useAuth"
 import { phpRequest } from "@/lib/phpBackend"
@@ -44,7 +45,7 @@ export default function PhpConsole() {
   return <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-8">
     <header className="flex flex-wrap items-center justify-between gap-4"><div><h1 className="text-2xl font-bold">{profile?.nome_pousada}</h1><p className="text-sm text-muted-foreground">Gestão PHP em ensaio · sem cobrança integrada</p></div><Button variant="outline" onClick={async () => { try { await signOut(); navigate("/login") } catch { toast.error("Não foi possível terminar a sessão") } }}>Sair</Button></header>
     <p role="status" className="rounded-xl border bg-accent p-4 text-sm">Este painel reduzido ainda não substitui as funcionalidades antigas. Não cobre tarifas sazonais, pagamentos ou check-in. Não use dados reais antes dos testes no alojamento.</p>
-    <p className="text-sm">Link público: <Link className="break-all text-primary underline" to={`/${profile?.slug}`}>{new URL(`${import.meta.env.BASE_URL}${profile?.slug}`, location.origin).href}</Link></p>
+    <PousadaSettings />
     <div className="grid gap-6 lg:grid-cols-2">
       <Card><CardHeader><CardTitle>Quartos</CardTitle></CardHeader><CardContent className="space-y-4">
         <form onSubmit={createRoom} className="space-y-3"><Label htmlFor="room-name">Nome</Label><Input id="room-name" required minLength={2} maxLength={160} value={room.nome} onChange={e => setRoom({ ...room, nome: e.target.value })} /><Label htmlFor="capacity">Capacidade</Label><Input id="capacity" type="number" min={1} max={50} required value={room.capacidade} onChange={e => setRoom({ ...room, capacidade: Number(e.target.value) })} /><Label htmlFor="price">Preço por noite (R$)</Label><Input id="price" type="number" min="1" step="0.01" required value={room.preco_base} onChange={e => setRoom({ ...room, preco_base: e.target.value })} /><Button disabled={busy}>Adicionar quarto</Button></form>

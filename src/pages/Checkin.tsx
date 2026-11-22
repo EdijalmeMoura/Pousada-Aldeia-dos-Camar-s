@@ -8,6 +8,9 @@ import { useAuth } from "@/hooks/useAuth"
 import { dbInsert, dbList, dbUpdate, logActivity, type Checkin, type Reserva } from "@/lib/db"
 import { aiGenerate, aiWelcomeMessage } from "@/lib/ai"
 import { uid, useSeo } from "@/lib/utils"
+import { waLink } from "@/lib/supabase"
+import { prepareCheckinMessage } from "@/lib/checkinMessage"
+import type { Quarto } from "@/lib/db"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,14 +26,23 @@ export default function Checkin() {
   const { user, profile } = useAuth()
   const qc = useQueryClient()
   const reservasQ = useQuery({ queryKey: ["reservas", user!.id], queryFn: () => dbList<Reserva>("reservas", user!.id) })
+  const quartosQ = useQuery({ queryKey: ["quartos", user!.id], queryFn: () => dbList<Quarto>("quartos", user!.id) })
   const checkinsQ = useQuery({ queryKey: ["checkins", user!.id], queryFn: () => dbList<Checkin>("checkins", user!.id) })
   const [reservaId, setReservaId] = useState("")
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [input, setInput] = useState("")
   const [busy, setBusy] = useState(false)
   const [active, setActive] = useState<Checkin | null>(null)
+  const [verified, setVerified] = useState(false)
+  const [messageOpened, setMessageOpened] = useState(false)
 
-  const reservas = (reservasQ.data ?? []).filter((r) => r.estado === "confirmada" || r.estado === "pendente")
+  const reservas = (reservasQ.data ?? []).filter((r) => r.estado === "confirmada")
+  const selectedReservation = (reservasQ.data ?? []).find(r => r.id === active?.reserva_id)
+  const selectedRoom = (quartosQ.data ?? []).find(q => q.id === selectedReservation?.quarto_id)
+  let checkinMessage = ""
+  if (active && selectedReservation && verified) {
+    try { checkinMessage = prepareCheckinMessage(selectedReservation, selectedRoom, profile, verified) } catch { /* mostra aviso abaixo */ }
+  }
 
   const start = useMutation({
     mutationFn: async (rid: string) => {
@@ -40,9 +52,9 @@ export default function Checkin() {
       return { c, welcome }
     },
     onSuccess: async ({ c, welcome }) => {
-      setActive(c); setMsgs([{ papel: "ia", texto: welcome }])
+      setActive(c); setMsgs([{ papel: "ia", texto: welcome }]); setVerified(false); setMessageOpened(false)
       await logActivity(user!.id, "checkin", "Check-in por IA iniciado")
-      toast.success("Check-in iniciado! A IA já saudou o hóspede.")
+      toast.success("Sessão criada. A mensagem da IA aparece apenas aqui; ainda não foi enviada ao hóspede.")
       qc.invalidateQueries({ queryKey: ["checkins"] })
     },
     onError: () => toast.error("Não foi possível iniciar o check-in."),
@@ -58,21 +70,30 @@ export default function Checkin() {
       const resposta = await aiGenerate(`O hóspede respondeu: "${texto}". Continue o check-in conversacional: confirme os dados, pergunte a hora de chegada e pedidos especiais. Se já tiver dados suficientes, apresente as regras da casa. Nunca invente códigos de acesso: o operador da pousada deve verificar e enviar o código real separadamente. Regras: ${profile?.regras_casa ?? ""}`)
       const updated = [...next, { papel: "ia" as const, texto: resposta }]
       setMsgs(updated)
-      const concluiu = /código|regras/i.test(resposta)
-      await dbUpdate<Checkin>("checkins", active.id, {
-        dados: { ultima_resposta: texto },
-        estado: concluiu ? "concluido" : "em_curso",
-        regras_enviadas: concluiu || active.regras_enviadas,
-        codigo_quarto: concluiu ? "4821" : active.codigo_quarto,
-      })
-      if (concluiu) { toast.success("Check-in concluído! Regras e código enviados ao hóspede."); qc.invalidateQueries({ queryKey: ["checkins"] }) }
+      await dbUpdate<Checkin>("checkins", active.id, { dados: { ultima_resposta: texto } })
+
     } catch { toast.error("A IA não respondeu. Tente novamente.") }
     setBusy(false)
   }
 
+  const confirmSent = async () => {
+    if (!active || !selectedReservation || !messageOpened) return
+    try {
+      const message = prepareCheckinMessage(selectedReservation, selectedRoom, profile, verified)
+      if (!message) return
+      await dbUpdate<Checkin>("checkins", active.id, {
+        estado: "concluido", regras_enviadas: true, codigo_quarto: selectedRoom!.codigo.trim(),
+        dados: { ...active.dados, identidade_confirmada_pelo_operador: "sim", envio_confirmado_pelo_operador: "sim" },
+      })
+      setActive({ ...active, estado: "concluido", regras_enviadas: true, codigo_quarto: selectedRoom!.codigo.trim() })
+      await qc.invalidateQueries({ queryKey: ["checkins"] })
+      toast.success("Envio assinalado como confirmado pelo operador.")
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível concluir o check-in.") }
+  }
+
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold">Check-in conversacional por IA</h1><p className="text-sm text-muted-foreground">Escolha uma reserva e deixe a IA recolher os dados e enviar as regras.</p></div>
+      <div><h1 className="text-2xl font-bold">Check-in conversacional por IA</h1><p className="text-sm text-muted-foreground">Simule a conversa. O envio de regras e código real é manual e requer confirmação do operador.</p></div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>
@@ -102,9 +123,9 @@ export default function Checkin() {
         </Card>
 
         <Card className="lg:col-span-2">
-          <CardHeader><CardTitle className="flex items-center gap-2"><MessageSquareText className="h-5 w-5 text-primary" /> Conversa com o hóspede</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="flex items-center gap-2"><MessageSquareText className="h-5 w-5 text-primary" /> Simulação de conversa</CardTitle></CardHeader>
           <CardContent>
-            {!active ? <EmptyState icon={MessageSquareText} titulo="Nenhuma conversa ativa" subtitulo="Inicie uma sessão de check-in para conversar com o hóspede por IA." />
+            {!active ? <EmptyState icon={MessageSquareText} titulo="Nenhuma conversa ativa" subtitulo="Escolha uma reserva confirmada para preparar uma simulação assistida por IA." />
               : (
                 <div className="space-y-4">
                   <div className="h-80 space-y-3 overflow-y-auto rounded-2xl border bg-muted/40 p-4" aria-live="polite">
@@ -119,7 +140,17 @@ export default function Checkin() {
                     <Input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()} placeholder="Escreva como se fosse o hóspede…" aria-label="Mensagem do hóspede" />
                     <Button onClick={send} disabled={busy || !input.trim()} aria-label="Enviar mensagem"><Send className="h-4 w-4" /></Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">Simule a resposta do hóspede — a IA conduz o check-in, recolhe dados e entrega regras + código do quarto.</p>
+                  <p className="text-xs text-muted-foreground">Escreva uma resposta de teste como se fosse o hóspede. Esta conversa não é enviada automaticamente por WhatsApp. Não introduza dados sensíveis sem necessidade.</p>
+                  {active.estado !== "concluido" && <div className="space-y-3 rounded-xl border bg-card p-4">
+                    <p className="font-semibold">Envio manual das instruções</p>
+                    <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={verified} onChange={e => { setVerified(e.target.checked); setMessageOpened(false) }} className="mt-1" /> Verifiquei a identidade do hóspede e confirmei que esta é a reserva correta.</label>
+                    {!selectedRoom?.codigo?.trim() && <p role="alert" className="text-sm text-destructive">Configure primeiro o código real do quarto na página Quartos.</p>}
+                    <div className="flex flex-wrap gap-2">
+                      {checkinMessage && selectedReservation && <Button variant="outline" asChild><a href={waLink(selectedReservation.telefone, checkinMessage)} target="_blank" rel="noreferrer" onClick={() => setMessageOpened(true)}>Preparar WhatsApp com regras e código</a></Button>}
+                      <Button onClick={confirmSent} disabled={!messageOpened || !verified || !checkinMessage}>Confirmar que enviei a mensagem</Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Abrir o WhatsApp não envia a mensagem. Confirme aqui apenas depois de a enviar e verificar o destinatário.</p>
+                  </div>}
                 </div>
               )}
           </CardContent>

@@ -128,3 +128,7 @@ O login pede apenas e-mail e palavra-passe; o nome pertence exclusivamente ao re
 ## Proteção da IA
 
 Aplique `supabase/migrations/011_ai_quota.sql` depois da `010` e volte a publicar `ai-generate`. A função agora exige sessão Supabase válida, limita o tamanho dos pedidos e usa a quota atómica de 100 chamadas por conta e dia (UTC). Se a quota ou o serviço de IA não estiverem configurados, a função falha sem chamar o gateway. A chave `LOVABLE_API_KEY` permanece exclusivamente no servidor. A demonstração offline deixou de inventar códigos de acesso ou números de negócio; o operador deve verificar e enviar o código real do quarto. Isto não substitui revisão humana de dados sensíveis e respostas do modelo.
+
+## Check-in assistido (envio manual)
+
+A conversa de `/app/checkin` é uma **simulação operada pela pousada**, não um canal de chat do hóspede. A IA pode ajudar a preparar respostas, mas não envia mensagens automaticamente e não deve inventar códigos. Só reservas confirmadas podem iniciar o fluxo. Após verificar a identidade do hóspede, o operador prepara uma mensagem WhatsApp com o **código real configurado no quarto** e as regras da casa; deve conferir o destinatário e enviar manualmente. A sessão só fica concluída depois de o operador assinalar que enviou a mensagem. Isto não comprova entrega ou leitura pelo hóspede. Não exponha códigos em páginas públicas nem introduza dados sensíveis desnecessários nos prompts da IA.

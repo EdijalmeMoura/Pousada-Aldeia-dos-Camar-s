@@ -164,3 +164,7 @@ Iniciada a migração para PHP + MySQL na Hostinger em `backend/README.md`. O es
 ### Pacote PHP de ensaio
 
 `VITE_BASE_PATH=/test/ npm run package:php:staging` gera um ZIP **apenas para domínio de testes separado**, com frontend PHP e endpoints públicos; não substitui um pacote operacional. Consulte `backend/README.md` para a base MySQL, configuração privada, limitações e ensaios ainda por executar. A versão real para `projetoredesnordeste.com.br/edijalmemoura/hospedae/` continua bloqueada até à validação efetiva do backend.
+
+### Guia de ensaio PHP na Hostinger
+
+A ordem de instalação segura no alojamento, incluindo base descartável, ficheiro privado fora da pasta pública, ZIP de ensaio e verificações, está em `docs/ENSAIO-HOSTINGER-PHP.md`. **Não é um instalador de produção.**

@@ -38,13 +38,31 @@ def package(base: str, build: bool = True) -> Path:
     if not php_files or not (API / "index.php").is_file():
         raise ValueError("Endpoints PHP em falta.")
     OUTPUT.parent.mkdir(exist_ok=True)
-    with zipfile.ZipFile(OUTPUT, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=8) as archive:
+    pending = OUTPUT.with_suffix(".tmp.zip")
+    try:
+        _write_package(pending, base, php_files)
+        with zipfile.ZipFile(pending) as archive:
+            if not {"index.html", ".htaccess", "api/index.php", "LEIA-ME-ENSAIO.txt"}.issubset(archive.namelist()):
+                raise ValueError("Pacote incompleto.")
+        pending.replace(OUTPUT)
+    finally:
+        pending.unlink(missing_ok=True)
+    return OUTPUT
+
+
+def _write_package(destination: Path, base: str, php_files: list[Path]) -> None:
+    with zipfile.ZipFile(destination, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=8) as archive:
         for path in sorted(DIST.rglob("*")):
             if not path.is_file():
                 continue
             rel = path.relative_to(DIST)
-            if path.is_symlink() or any(part.startswith(".env") for part in rel.parts) or rel.parts[0] == "api":
-                raise ValueError(f"Ficheiro não permitido: {rel}")
+            allowed = (
+                rel.as_posix() in {"index.html", ".htaccess"}
+                or (rel.parts[0] == "assets" and len(rel.parts) == 2 and path.suffix in {".js", ".css"})
+                or (rel.parts[0] == "images" and len(rel.parts) == 2 and path.suffix.lower() in {".png", ".jpg", ".jpeg", ".webp", ".svg", ".ico"})
+            )
+            if path.is_symlink() or not allowed:
+                raise ValueError(f"Ficheiro não permitido no build público: {rel}")
             archive.write(path, rel.as_posix())
         for path in php_files:
             if path.is_symlink():
@@ -63,11 +81,6 @@ def package(base: str, build: bool = True) -> Path:
             "Corra os ensaios descritos em backend/README.md antes de qualquer publicação.\n"
             "O ZIP NÃO contém migrações, configuração privada nem instalador de produção.\n"
         ))
-    with zipfile.ZipFile(OUTPUT) as archive:
-        if not {"index.html", ".htaccess", "api/index.php", "LEIA-ME-ENSAIO.txt"}.issubset(archive.namelist()):
-            OUTPUT.unlink()
-            raise ValueError("Pacote incompleto.")
-    return OUTPUT
 
 
 if __name__ == "__main__":

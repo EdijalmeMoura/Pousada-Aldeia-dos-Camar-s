@@ -33,3 +33,15 @@ Aplique `sql/004_cancellations.sql` **após** 001–003. `POST ?action=cancel-bo
 ## Limites de pedidos públicos
 
 A tabela `auth_attempts` da migração 003 também limita pedidos por IP (`REMOTE_ADDR` do servidor, não cabeçalhos fornecidos pelo cliente): até 60 cotações e 6 tentativas de reserva em 15 minutos, além de limites de entrada/registo por IP e por combinação IP/e-mail. O servidor devolve HTTP 429 e `Retry-After` ao exceder um limite; um IP partilhado pode atingir o limite mais cedo. `POST ?action=reservar` exige `Origin` igual ao `trusted_origin` configurado. Isto reduz abuso, mas não substitui monitorização, HTTPS, mecanismos anti-bot ou testes de carga. A tabela acumula identificadores hash; planeie uma tarefa de limpeza periódica dos registos antigos no servidor. `npm run test:php:syntax` analisa os ficheiros PHP na CI, mas **não executa** o código PHP nem testa MySQL.
+
+## Ensaio de integração numa base descartável
+
+Após criar **uma base vazia de ensaio** cujo nome inclua o segmento `test`, aplique nela, por ordem, `sql/001_core.sql` a `sql/004_cancellations.sql`. Numa máquina com PHP 8.2+ CLI, PDO MySQL e acesso a essa base, guarde um `config.php` privado **fora de `public_html`** (modelo em `private/config.example.php`). Corra:
+
+```sh
+RUN_PHP_INTEGRATION=I_UNDERSTAND_THIS_IS_A_DISPOSABLE_DATABASE \
+HOSPEDAE_TEST_CONFIG_PATH=/caminho/privado/config.php \
+php backend/tests/integration.php
+```
+
+O script recusa-se a correr sem confirmação, sem base com `test` no nome ou se já houver contas. Cria dados temporários para duas pousadas, verifica isolamento do catálogo, preço, consentimento, conflito e bloqueios; apaga-os num bloco `finally`. **Não execute na base de produção**. Este ensaio é sequencial: ainda faltam testes de pedidos HTTP com sessões e de concorrência real entre processos. Este ambiente não tem PHP CLI/MySQL, pelo que o ensaio **não foi executado** aqui. Nunca envie o ficheiro privado para o repositório nem o coloque na pasta pública do site.

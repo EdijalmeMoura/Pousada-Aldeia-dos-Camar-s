@@ -55,7 +55,7 @@ def package(base: str, build: bool = True) -> Path:
             "NÃO PUBLICAR NO SITE REAL NEM USAR DADOS REAIS.\n\n"
             f"Extraia este ZIP na pasta public_html{base} de um domínio de TESTES separado.\n"
             "O ZIP contém apenas o frontend e os endpoints PHP públicos.\n"
-            "Crie uma base MySQL descartável, aplique as migrações backend/sql/001 a 005\n"
+            "Crie uma base MySQL descartável, aplique as migrações backend/sql/001 a 006\n"
             "e guarde config.php FORA de public_html. Configure HOSPEDAE_CONFIG_PATH\n"
             "no servidor com o caminho absoluto para esse ficheiro privado; configure\n"
             "trusted_origin e cookie_path corretos. Esses passos NÃO são automáticos.\n"

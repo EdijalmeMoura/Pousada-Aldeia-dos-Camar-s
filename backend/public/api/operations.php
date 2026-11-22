@@ -16,7 +16,7 @@ function operation(PDO $db, string $action, array $config): array {
         return $query->fetchAll(PDO::FETCH_ASSOC);
     }
     if ($action === 'my-bookings') {
-        $query = $db->prepare('SELECT HEX(id) AS id, HEX(quarto_id) AS quarto_id, nome_hospede, email, telefone, check_in, check_out, adultos, estado, valor_total_centavos / 100 AS valor_total, codigo_reserva, metodo_pagamento, consentimento_em, cancelada_em, motivo_cancelamento, created_at FROM reservas WHERE pousada_id = UNHEX(?) ORDER BY created_at DESC LIMIT 500');
+        $query = $db->prepare('SELECT HEX(id) AS id, HEX(quarto_id) AS quarto_id, nome_hospede, email, telefone, check_in, check_out, adultos, estado, valor_total_centavos / 100 AS valor_total, codigo_reserva, metodo_pagamento, consentimento_em, confirmada_em, cancelada_em, motivo_cancelamento, created_at FROM reservas WHERE pousada_id = UNHEX(?) ORDER BY created_at DESC LIMIT 500');
         $query->execute([$tenant]);
         return $query->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -112,6 +112,28 @@ function operation(PDO $db, string $action, array $config): array {
             $insert->execute([$id, $tenant, $room, $start, $end, $reason]);
             $db->commit();
             return ['id' => $id];
+        } catch (Throwable $error) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $error;
+        }
+    }
+    if ($action === 'confirm-booking') {
+        $id = (string)($body['id'] ?? '');
+        if (!preg_match('/^[0-9a-fA-F]{32}$/D', $id)) throw new InvalidArgumentException('Identificador inválido.');
+        $lookup = $db->prepare('SELECT HEX(quarto_id) FROM reservas WHERE pousada_id = UNHEX(?) AND id = UNHEX(?)');
+        $lookup->execute([$tenant, $id]);
+        $room = $lookup->fetchColumn();
+        if (!$room) throw new InvalidArgumentException('Reserva não encontrada nesta pousada.');
+        $db->beginTransaction();
+        try {
+            $lock = $db->prepare('SELECT id FROM quartos WHERE pousada_id = UNHEX(?) AND id = UNHEX(?) FOR UPDATE');
+            $lock->execute([$tenant, $room]);
+            if (!$lock->fetchColumn()) throw new InvalidArgumentException('Quarto inexistente.');
+            $update = $db->prepare("UPDATE reservas SET estado = 'confirmada', confirmada_em = NOW() WHERE pousada_id = UNHEX(?) AND quarto_id = UNHEX(?) AND id = UNHEX(?) AND estado = 'pendente' AND check_out > CURRENT_DATE()");
+            $update->execute([$tenant, $room, $id]);
+            if ($update->rowCount() !== 1) throw new DomainException('Reserva já alterada ou estadia terminada. Atualize a página.');
+            $db->commit();
+            return ['ok' => true, 'estado' => 'confirmada'];
         } catch (Throwable $error) {
             if ($db->inTransaction()) $db->rollBack();
             throw $error;

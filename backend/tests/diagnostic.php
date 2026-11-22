@@ -38,7 +38,7 @@ try {
         'accounts' => ['id', 'email', 'password_hash', 'session_version'],
         'pousadas' => ['id', 'owner_id', 'nome', 'slug'],
         'quartos' => ['id', 'pousada_id', 'preco_base_centavos', 'ativo'],
-        'reservas' => ['id', 'pousada_id', 'quarto_id', 'estado', 'check_in', 'check_out', 'valor_total_centavos', 'consentimento_em', 'codigo_reserva', 'metodo_pagamento', 'cancelada_em', 'motivo_cancelamento'],
+        'reservas' => ['id', 'pousada_id', 'quarto_id', 'estado', 'check_in', 'check_out', 'valor_total_centavos', 'consentimento_em', 'confirmada_em', 'codigo_reserva', 'metodo_pagamento', 'cancelada_em', 'motivo_cancelamento'],
         'bloqueios' => ['id', 'pousada_id', 'quarto_id', 'data_inicio', 'data_fim', 'removido_em'],
         'auth_attempts' => ['identifier', 'attempts', 'window_start'],
     ];

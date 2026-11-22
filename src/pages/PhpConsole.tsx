@@ -44,6 +44,16 @@ export default function PhpConsole() {
     } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível criar a reserva") }
     finally { setBusy(false) }
   }
+  const confirmBooking = async (id: string) => {
+    if (!window.confirm("Confirmar esta reserva? Esta ação NÃO confirma o pagamento nem envia mensagem ao hóspede.")) return
+    setBusy(true)
+    try {
+      await phpWrite("confirm-booking", { id })
+      await qc.invalidateQueries({ queryKey: ["php-bookings"] })
+      toast.success("Estadia confirmada. Contacte o hóspede manualmente; não foi confirmada nenhuma cobrança.")
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível confirmar") }
+    finally { setBusy(false) }
+  }
   return <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-8">
     <header className="flex flex-wrap items-center justify-between gap-4"><div><h1 className="text-2xl font-bold">{profile?.nome_pousada}</h1><p className="text-sm text-muted-foreground">Gestão PHP em ensaio · sem cobrança integrada</p></div><Button variant="outline" onClick={async () => { try { await signOut(); navigate("/login") } catch { toast.error("Não foi possível terminar a sessão") } }}>Sair</Button></header>
     <p role="status" className="rounded-xl border bg-accent p-4 text-sm">Este painel reduzido ainda não substitui as funcionalidades antigas. Não cobre tarifas sazonais, pagamentos ou check-in. Não use dados reais antes dos testes no alojamento.</p>
@@ -66,6 +76,6 @@ export default function PhpConsole() {
       </CardContent></Card>
     </div>
     <CalendarOperations rooms={rooms.data ?? []} bookings={bookings.data ?? []} />
-    <Card><CardHeader><CardTitle>Reservas registadas</CardTitle></CardHeader><CardContent><ul className="space-y-2">{bookings.data?.map(r => <li key={r.id} className="rounded-lg border p-3 text-sm"><strong>{r.codigo_reserva}</strong> · {r.nome_hospede} · {r.check_in} a {r.check_out} · {brl(Number(r.valor_total))} · {r.estado}</li>)}</ul></CardContent></Card>
+    <Card><CardHeader><CardTitle>Reservas registadas</CardTitle></CardHeader><CardContent><ul className="space-y-2">{bookings.data?.map(r => <li key={r.id} className="rounded-lg border p-3 text-sm"><strong>{r.codigo_reserva}</strong> · {r.nome_hospede} · {r.check_in} a {r.check_out} · {brl(Number(r.valor_total))} · {r.estado} {r.estado === "pendente" && <Button variant="outline" size="sm" className="ml-2" disabled={busy} onClick={() => confirmBooking(r.id)}>Confirmar estadia</Button>}</li>)}</ul></CardContent></Card>
   </main>
 }

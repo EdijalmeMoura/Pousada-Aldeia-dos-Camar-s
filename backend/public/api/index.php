@@ -47,6 +47,7 @@ try {
         exit;
     }
     require __DIR__ . '/booking.php';
+    require_once __DIR__ . '/rate_limit.php';
     $slug = (string)($_GET['slug'] ?? '');
     if (!in_array($action, ['reservar', 'quote'], true) && (!preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $slug) || strlen($slug) > 80)) {
         throw new InvalidArgumentException('Endereço inválido.');
@@ -54,9 +55,13 @@ try {
     if ($action === 'pousada') $result = publicPousada($pdo, $slug);
     elseif ($action === 'quartos') $result = publicRooms($pdo, $slug);
     elseif ($action === 'quote') {
+        limitRequests($pdo, 'quote', 60);
         require_once __DIR__ . '/availability.php';
         $result = quotePublic($pdo, (string)($_GET['slug'] ?? ''), (string)($_GET['quarto_id'] ?? ''), (string)($_GET['check_in'] ?? ''), (string)($_GET['check_out'] ?? ''), (int)($_GET['adultos'] ?? 0));
     } else {
+        require_once __DIR__ . '/auth.php';
+        requireSameOrigin((string)($config['trusted_origin'] ?? ''));
+        limitRequests($pdo, 'public-booking', 6);
         if (strtolower(trim(explode(';', $_SERVER['CONTENT_TYPE'] ?? '')[0])) !== 'application/json'
             || (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 4096) throw new InvalidArgumentException('Pedido inválido.');
         $input = json_decode(file_get_contents('php://input'), true, 16, JSON_THROW_ON_ERROR);
@@ -64,6 +69,10 @@ try {
         $result = createPublicBooking($pdo, $input);
     }
     echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+} catch (TooManyRequests $error) {
+    header('Retry-After: 900');
+    http_response_code(429);
+    echo json_encode(['error' => $error->getMessage()], JSON_UNESCAPED_UNICODE);
 } catch (RuntimeException $error) {
     http_response_code($error->getCode() === 401 ? 401 : 503);
     echo json_encode(['error' => $error->getCode() === 401 ? 'Autenticação necessária.' : 'Serviço indisponível.']);

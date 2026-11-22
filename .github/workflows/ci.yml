@@ -16,5 +16,6 @@ jobs:
       - run: npm ci --legacy-peer-deps
       - run: npm test
       - run: npm run test:deploy
+      - run: npm run test:php:syntax
       - run: python3 -m unittest discover -s scripts -p "test_package_hostinger.py"
       - run: npm run build

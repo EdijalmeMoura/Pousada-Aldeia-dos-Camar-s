@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/rate_limit.php';
 
 function startAuthSession(string $cookiePath): void {
     if (session_status() === PHP_SESSION_ACTIVE) return;
@@ -47,7 +48,7 @@ function throttle(PDO $db, string $email): void {
     $query->execute([$key]);
     $query = $db->prepare('SELECT attempts FROM auth_attempts WHERE identifier = UNHEX(?)');
     $query->execute([$key]);
-    if ((int)$query->fetchColumn() > 8) throw new DomainException('Demasiadas tentativas. Aguarde 15 minutos.');
+    if ((int)$query->fetchColumn() > 8) throw new TooManyRequests('Demasiadas tentativas. Aguarde 15 minutos.');
 }
 
 function currentAccount(PDO $db): ?array {
@@ -84,6 +85,7 @@ function authAction(PDO $db, string $action, array $config): array {
         || !is_string($password) || strlen($password) < 12 || strlen($password) > 256) {
         throw new InvalidArgumentException('Dados de acesso inválidos.');
     }
+    limitRequests($db, 'auth-ip', 25);
     throttle($db, $email);
     if ($action === 'register') {
         $name = trim((string)($body['nome_pousada'] ?? ''));

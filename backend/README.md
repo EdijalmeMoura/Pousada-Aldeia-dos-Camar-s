@@ -57,3 +57,7 @@ npm run test:php:http
 ```
 
 O ensaio verifica cookies/sessão e CSRF, cria duas contas/quartos, tenta aceder ao quarto de outra pousada, lança **dois pedidos de reserva em paralelo** e espera apenas um sucesso, verifica reservas privadas e bloqueios. **Não apaga as contas**: elimine a base descartável após o ensaio. Não o execute no site nem na base reais. Mesmo com o ensaio aprovado, é necessária validação adicional de concorrência com múltiplos trabalhadores PHP, pagamentos, privacidade e recuperação de conta. `npm run test:php:http:guard` testa localmente as restrições de endereço; **nenhum pedido HTTP remoto foi executado neste ambiente**.
+
+## Pacote de ensaio para Hostinger (não é produção)
+
+Com `VITE_BASE_PATH=/test/ npm run package:php:staging`, o projeto gera `artifacts/hospedae-PHP-ENSAIO.zip`. Extraia-o somente na subpasta `/test/` de **um domínio de ensaio separado**, nunca no domínio real. O comando recusa a raiz e caminhos sem segmento final `/test/` ou `/staging/`, e impede a inclusão de variáveis Supabase no build. O ZIP inclui apenas frontend e `backend/public/api/*.php`, sem credenciais ou SQL; as migrações 001–004 e o ficheiro `config.php` privado são preparados separadamente. No servidor PHP, `HOSPEDAE_CONFIG_PATH` precisa de apontar para o caminho absoluto de `config.php` fora de `public_html`. Verifique se a sua configuração Hostinger permite definir essa variável de ambiente e se PHP 8.2+ com PDO MySQL está disponível. Não use esta versão com hóspedes reais. O ZIP local está ignorado pelo Git.

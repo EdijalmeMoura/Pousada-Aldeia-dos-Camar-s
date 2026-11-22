@@ -20,6 +20,8 @@ if (!is_array($config) || !preg_match('/(?:^|_)test(?:_|$)/i', (string)($config[
 require __DIR__ . '/../public/api/booking.php';
 $db = new PDO('mysql:host=' . $config['host'] . ';dbname=' . $config['database'] . ';charset=utf8mb4',
     $config['user'], $config['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+require __DIR__ . '/../public/api/clock.php';
+configureClock($db, $config);
 if ((int)$db->query('SELECT COUNT(*) FROM accounts')->fetchColumn() !== 0) {
     fwrite(STDERR, "A base não está vazia. Use uma base descartável sem contas.\n");
     exit(2);

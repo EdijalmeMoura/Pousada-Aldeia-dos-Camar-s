@@ -30,6 +30,9 @@ try {
     $db = new PDO('mysql:host=' . $config['host'] . ';dbname=' . $config['database'] . ';charset=utf8mb4',
         $config['user'], $config['password'], [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => false]);
     report(true, 'Ligação PDO MySQL');
+    require __DIR__ . '/../public/api/clock.php';
+    configureClock($db, $config);
+    report($db->query('SELECT @@session.time_zone')->fetchColumn() === $config['mysql_time_offset'], 'Fusos PHP e MySQL alinhados');
     $tables = ['accounts', 'pousadas', 'quartos', 'reservas', 'bloqueios', 'auth_attempts'];
     $query = $db->query('SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()');
     $engines = $query->fetchAll(PDO::FETCH_KEY_PAIR);

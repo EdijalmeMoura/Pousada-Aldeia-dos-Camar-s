@@ -89,3 +89,7 @@ A lista de reservas mostra o contacto do hóspede e, apenas após confirmar a es
 ## Resumo operacional (sem pagamentos)
 
 `GET ?action=my-summary` exige sessão e devolve apenas contagens e valor agregado da **pousada autenticada**: reservas pendentes, confirmadas, chegadas do dia e valor reservado dessas duas categorias. Não apresenta hóspedes nem valores de outras pousadas. **Valor reservado não é dinheiro recebido**; não use o número como faturação. «Hoje» segue `CURRENT_DATE()` do MySQL: confirme o fuso horário configurado na ligação antes de usar esta métrica. O ensaio HTTP verifica o isolamento e a passagem de pendente a confirmada.
+
+## Fuso horário da pousada
+
+O ficheiro privado `config.php` precisa agora de `php_timezone` e `mysql_time_offset`, como no exemplo (`America/Recife` e `-03:00`). O backend recusa pedidos se faltarem ou se os dois fusos não coincidirem no momento atual; define o fuso da ligação MySQL antes de avaliar `CURRENT_DATE()` ou `NOW()`. Isto alinha a validação de datas, a aceitação de privacidade e «chegadas hoje». O diagnóstico de ensaio confirma a configuração. **Esta versão usa um único fuso por instalação**, não um fuso por pousada; se houver pousadas noutras regiões do Brasil, será necessário guardar e aplicar o fuso de cada pousada antes de disponibilizar a plataforma a todas. Não altere o fuso de uma base com dados reais sem planear o impacto nos horários já registados.

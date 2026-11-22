@@ -31,6 +31,8 @@ try {
         $config['password'],
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 3]
     );
+    require_once __DIR__ . '/clock.php';
+    configureClock($pdo, $config);
     if ($action === 'health') {
         $pdo->query('SELECT 1');
         echo json_encode(['status' => 'database_connected']);

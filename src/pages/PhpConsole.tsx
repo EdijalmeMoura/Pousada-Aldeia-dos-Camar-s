@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { RoomEditor } from "@/components/php/RoomEditor"
 import { PousadaSettings } from "@/components/php/PousadaSettings"
 import { CalendarOperations } from "@/components/php/CalendarOperations"
 import { useAuth } from "@/hooks/useAuth"
@@ -13,7 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-type Room = { id: string; nome: string; capacidade: number; preco_base: number }
+type Room = { id: string; nome: string; capacidade: number; preco_base: number; ativo: number | boolean }
 type Booking = { id: string; quarto_id: string; nome_hospede: string; check_in: string; check_out: string; estado: string; valor_total: number; codigo_reserva: string }
 
 export default function PhpConsole() {
@@ -50,11 +51,11 @@ export default function PhpConsole() {
       <Card><CardHeader><CardTitle>Quartos</CardTitle></CardHeader><CardContent className="space-y-4">
         <form onSubmit={createRoom} className="space-y-3"><Label htmlFor="room-name">Nome</Label><Input id="room-name" required minLength={2} maxLength={160} value={room.nome} onChange={e => setRoom({ ...room, nome: e.target.value })} /><Label htmlFor="capacity">Capacidade</Label><Input id="capacity" type="number" min={1} max={50} required value={room.capacidade} onChange={e => setRoom({ ...room, capacidade: Number(e.target.value) })} /><Label htmlFor="price">Preço por noite (R$)</Label><Input id="price" type="number" min="1" step="0.01" required value={room.preco_base} onChange={e => setRoom({ ...room, preco_base: e.target.value })} /><Button disabled={busy}>Adicionar quarto</Button></form>
         {rooms.isError && <p role="alert">Não foi possível carregar os quartos. <Button variant="link" onClick={() => rooms.refetch()}>Tentar novamente</Button></p>}
-        <ul className="space-y-2">{rooms.data?.map(r => <li key={r.id} className="rounded-lg border p-3 text-sm">{r.nome} · {r.capacidade} pessoas · {brl(Number(r.preco_base))}/noite</li>)}</ul>
+        <ul className="space-y-2">{rooms.data?.map(r => <RoomEditor key={r.id} room={r} />)}</ul>
       </CardContent></Card>
       <Card><CardHeader><CardTitle>Reserva manual</CardTitle></CardHeader><CardContent className="space-y-4">
         <form onSubmit={createBooking} className="space-y-3">
-          <Label htmlFor="room">Quarto</Label><select id="room" required className="flex h-10 w-full rounded-md border bg-background px-3" value={booking.quarto_id} onChange={e => setBooking({ ...booking, quarto_id: e.target.value })}><option value="">Escolha um quarto</option>{rooms.data?.map(r => <option key={r.id} value={r.id}>{r.nome}</option>)}</select>
+          <Label htmlFor="room">Quarto</Label><select id="room" required className="flex h-10 w-full rounded-md border bg-background px-3" value={booking.quarto_id} onChange={e => setBooking({ ...booking, quarto_id: e.target.value })}><option value="">Escolha um quarto</option>{rooms.data?.filter(r => Boolean(Number(r.ativo))).map(r => <option key={r.id} value={r.id}>{r.nome}</option>)}</select>
           {([['nome_hospede', 'Nome do hóspede'], ['email', 'E-mail'], ['telefone', 'Telefone'], ['check_in', 'Entrada'], ['check_out', 'Saída']] as const).map(([key, label]) => <div key={key}><Label htmlFor={key}>{label}</Label><Input id={key} required type={key === 'email' ? 'email' : key.startsWith('check_') ? 'date' : 'text'} value={booking[key]} onChange={e => setBooking({ ...booking, [key]: e.target.value })} /></div>)}
           <Label htmlFor="adults">Adultos</Label><Input id="adults" type="number" min={1} max={50} required value={booking.adultos} onChange={e => setBooking({ ...booking, adultos: Number(e.target.value) })} />
           <p className="text-xs text-muted-foreground">Pagamento a combinar diretamente com a pousada; a reserva não confirma qualquer cobrança.</p><Button disabled={busy || !rooms.data?.length}>Registar reserva</Button>

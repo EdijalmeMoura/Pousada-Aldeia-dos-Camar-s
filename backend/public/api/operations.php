@@ -60,6 +60,38 @@ function operation(PDO $db, string $action, array $config): array {
         $insert->execute([$id, $tenant, $name, $capacity, $price]);
         return ['id' => $id, 'nome' => $name];
     }
+    if ($action === 'update-room') {
+        $id = (string)($body['id'] ?? '');
+        $name = trim((string)($body['nome'] ?? ''));
+        $capacity = filter_var($body['capacidade'] ?? null, FILTER_VALIDATE_INT);
+        $price = filter_var($body['preco_base_centavos'] ?? null, FILTER_VALIDATE_INT);
+        $active = $body['ativo'] ?? null;
+        if (!preg_match('/^[0-9a-fA-F]{32}$/D', $id)
+            || mb_strlen($name) < 2 || mb_strlen($name) > 160
+            || $capacity === false || $capacity < 1 || $capacity > 50
+            || $price === false || $price < 100 || $price > 100000000
+            || !is_bool($active)) {
+            throw new InvalidArgumentException('Dados do quarto inválidos.');
+        }
+        $db->beginTransaction();
+        try {
+            $lock = $db->prepare('SELECT id FROM quartos WHERE pousada_id = UNHEX(?) AND id = UNHEX(?) FOR UPDATE');
+            $lock->execute([$tenant, $id]);
+            if (!$lock->fetchColumn()) throw new InvalidArgumentException('Quarto inexistente nesta pousada.');
+            $query = $db->prepare("SELECT MAX(adultos) FROM reservas WHERE pousada_id = UNHEX(?) AND quarto_id = UNHEX(?) AND estado IN ('pendente', 'confirmada') AND check_out > CURRENT_DATE()");
+            $query->execute([$tenant, $id]);
+            if ((int)$query->fetchColumn() > $capacity) {
+                throw new DomainException('A capacidade é inferior ao número de hóspedes de uma reserva ativa.');
+            }
+            $update = $db->prepare('UPDATE quartos SET nome = ?, capacidade = ?, preco_base_centavos = ?, ativo = ? WHERE pousada_id = UNHEX(?) AND id = UNHEX(?)');
+            $update->execute([$name, $capacity, $price, $active ? 1 : 0, $tenant, $id]);
+            $db->commit();
+            return ['id' => $id, 'nome' => $name, 'ativo' => $active];
+        } catch (Throwable $error) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $error;
+        }
+    }
     if ($action === 'add-block') {
         $room = (string)($body['quarto_id'] ?? '');
         $start = (string)($body['data_inicio'] ?? '');

@@ -79,6 +79,12 @@ async function run() {
   check(duplicate.status === 409, 'slug de outra pousada rejeitado')
   const roomA = await addRoom(a, 'Quarto A')
   const roomB = await addRoom(b, 'Quarto B')
+  const disabled = await call('update-room', { session: a, body: { id: roomA, nome: 'Quarto A', capacidade: 2, preco_base_centavos: 12000, ativo: false } })
+  check(disabled.status === 200, 'desativar quarto')
+  const hidden = await call('quartos', { params: { slug: a.account.slug } })
+  check(hidden.status === 200 && hidden.result.length === 0, 'quarto inativo fora do catálogo')
+  const enabled = await call('update-room', { session: a, body: { id: roomA, nome: 'Quarto A', capacidade: 2, preco_base_centavos: 12000, ativo: true } })
+  check(enabled.status === 200, 'reativar quarto')
   const roomsA = await call('my-rooms', { session: a })
   check(roomsA.status === 200 && roomsA.result.some(r => r.id.toLowerCase() === roomA) && !roomsA.result.some(r => r.id.toLowerCase() === roomB), 'quartos isolados')
   const start = new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10)
@@ -92,6 +98,10 @@ async function run() {
   const attempts = await Promise.all([call('reservar', { body: input }), call('reservar', { body: input })])
   check(attempts.filter(r => r.status === 200).length === 1 && attempts.filter(r => r.status === 409).length === 1,
     'dois pedidos lançados em paralelo: exatamente uma reserva aceite')
+  const tooSmall = await call('update-room', { session: a, body: { id: roomA, nome: 'Quarto A', capacidade: 1, preco_base_centavos: 12000, ativo: true } })
+  check(tooSmall.status === 409, 'não reduzir capacidade abaixo de reserva ativa')
+  const changedPrice = await call('update-room', { session: a, body: { id: roomA, nome: 'Quarto A', capacidade: 2, preco_base_centavos: 15000, ativo: true } })
+  check(changedPrice.status === 200, 'alterar preço futuro')
   const bookingsA = await call('my-bookings', { session: a })
   const bookingsB = await call('my-bookings', { session: b })
   check(bookingsA.status === 200 && bookingsB.status === 200 && bookingsA.result.length === 1 && bookingsB.result.length === 0,

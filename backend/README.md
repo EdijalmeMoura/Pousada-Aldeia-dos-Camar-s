@@ -69,3 +69,7 @@ Antes dos ensaios funcionais, no servidor de **testes**, corra `HOSPEDAE_TEST_CO
 ## Nome e link público no painel PHP
 
 `POST ?action=update-pousada` recebe `nome` e `slug`, exige sessão, `Origin` e CSRF, atualiza apenas a pousada do proprietário e rejeita slugs reservados ou já usados. O slug é validado no servidor com 3–40 caracteres minúsculos, números ou hífen. O ensaio HTTP também verifica a rejeição de duplicados e a desativação do link antigo. **Alterar o link antigo pode quebrar reservas partilhadas:** avise os hóspedes antes de o mudar. Não há redirecionamento automático nem histórico de slugs nesta fase.
+
+## Edição de quartos
+
+`POST ?action=update-room` exige sessão/CSRF, `id`, `nome`, `capacidade`, `preco_base_centavos` e `ativo` booleano. O quarto é bloqueado em transação e só pode pertencer à pousada da sessão. A redução de capacidade é recusada se houver reservas pendentes/confirmadas que ainda não terminaram com mais hóspedes. Desativar retira-o do catálogo público e impede novas reservas, mas **não cancela** reservas existentes; alterar o preço afeta apenas novas cotações, não o valor já gravado. O ensaio HTTP cobre desativação/reativação e a recusa de redução de capacidade. Ainda falta testá-lo num MySQL real.

@@ -30,6 +30,10 @@ function assertTest(bool $condition, string $description): void {
     if (!$condition) throw new RuntimeException('FALHOU: ' . $description);
     echo "OK: $description\n";
 }
+function expectedCents(mixed $amount): int {
+    if (!is_numeric($amount)) throw new RuntimeException('Valor de cotação não numérico.');
+    return (int)round((float)$amount * 100);
+}
 function insertTest(PDO $db, string $sql, array $params): void {
     $query = $db->prepare($sql);
     $query->execute($params);
@@ -61,9 +65,9 @@ try {
         'metodo_pagamento' => 'pix', 'aceito_privacidade' => true,
     ];
     $quote = quotePublic($db, $slugs[0], $rooms[0], $start, $end, 2);
-    assertTest($quote['valor_total'] === 250.0 && $quote['noites'] === 2, 'cotação calculada no servidor');
+    assertTest(expectedCents($quote['valor_total']) === 25000 && $quote['noites'] === 2, 'cotação calculada no servidor');
     $booking = createPublicBooking($db, $input);
-    assertTest($booking['valor_total'] === 250.0, 'reserva pública e preço do servidor');
+    assertTest(expectedCents($booking['valor_total']) === 25000, 'reserva pública e preço do servidor');
     $consent = $db->prepare('SELECT consentimento_em FROM reservas WHERE codigo_reserva = ?');
     $consent->execute([$booking['codigo_reserva']]);
     assertTest($consent->fetchColumn() !== null, 'aceitação pública guardada');
@@ -78,7 +82,7 @@ try {
     try { createPublicBooking($db, $other); throw new RuntimeException('Aceitou sem privacidade'); }
     catch (InvalidArgumentException $expected) { echo "OK: consentimento obrigatório\n"; }
     $other['aceito_privacidade'] = true;
-    assertTest(createPublicBooking($db, $other)['valor_total'] === 250.0, 'mesmas datas noutra pousada permitidas');
+    assertTest(expectedCents(createPublicBooking($db, $other)['valor_total']) === 25000, 'mesmas datas noutra pousada permitidas');
     insertTest($db, 'INSERT INTO bloqueios (id, pousada_id, quarto_id, data_inicio, data_fim, motivo) VALUES (UNHEX(?), UNHEX(?), UNHEX(?), ?, ?, ?)',
         [$blockId, $tenants[0], $rooms[0], $end, $next, 'ensaio']);
     $later = $input;
@@ -88,7 +92,7 @@ try {
     $db->prepare('UPDATE bloqueios SET removido_em = NOW() WHERE id = UNHEX(?)')->execute([$blockId]);
     $later['aceito_privacidade'] = false;
     $manualResult = createPublicBooking($db, $later, true);
-    assertTest($manualResult['valor_total'] === 125.0, 'reserva manual após remover bloqueio');
+    assertTest(expectedCents($manualResult['valor_total']) === 12500, 'reserva manual após remover bloqueio');
     $consent->execute([$manualResult['codigo_reserva']]);
     assertTest($consent->fetchColumn() === null, 'reserva manual não declara consentimento público');
     echo "Fim dos ensaios funcionais sequenciais. Concorrência entre processos ainda por testar.\n";

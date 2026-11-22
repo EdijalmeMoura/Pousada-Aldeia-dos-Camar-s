@@ -111,8 +111,12 @@ Consulte [docs/DEPLOY-HOSTINGER.md](docs/DEPLOY-HOSTINGER.md) para a sequência 
 
 ## Diagnóstico de segurança no Supabase
 
-Depois de aplicar as migrações `001`–`009`, execute `supabase/tests/production_checks.sql` no SQL Editor. O script verifica RLS, permissões `anon`, funções RPC e restrições/triggers essenciais sem alterar dados. Não foi executado neste repositório: é necessário um projeto Supabase real. O resultado não substitui ensaios de isolamento com duas contas e um hóspede anónimo.
+Depois de aplicar as migrações `001`–`010`, execute `supabase/tests/production_checks.sql` no SQL Editor. O script verifica RLS, permissões `anon`, funções RPC e restrições/triggers essenciais sem alterar dados. Não foi executado neste repositório: é necessário um projeto Supabase real. O resultado não substitui ensaios de isolamento com duas contas e um hóspede anónimo.
 
 ## Fotografias da pousada
 
 A página pública só mostra fotografias explicitamente configuradas nos quartos; quando falta uma imagem ou o endereço está quebrado, mostra um estado neutro «Fotografia indisponível». Não apresenta fotos geradas como se fossem do alojamento. O banner público também não usa a imagem ilustrativa da landing. A carga de quartos/reservas de exemplo é exclusiva do modo local e é bloqueada quando o Supabase estiver configurado. Antes de divulgar um link real, cada pousada deve inserir fotografias próprias com autorização de utilização.
+
+## Isolamento entre pousadas
+
+Aplique `supabase/migrations/010_tenant_foreign_keys.sql` **após** a `009`. Chaves estrangeiras compostas impedem que tarifas, reservas e bloqueios de uma conta referenciem quartos de outra conta, e que um check-in referencie uma reserva alheia. Esta proteção complementa RLS: a política por `user_id` isoladamente não garante a propriedade da entidade associada. Se já houver dados inconsistentes, a migração falha intencionalmente; não os ignore, investigue e corrija antes de voltar a aplicar. O diagnóstico `supabase/tests/production_checks.sql` verifica a presença destas relações, mas o comportamento deve ser testado com duas contas reais.

@@ -1,4 +1,4 @@
--- Execute no SQL Editor do projeto Supabase, DEPOIS das migrações 001–009.
+-- Execute no SQL Editor do projeto Supabase, DEPOIS das migrações 001–010.
 -- Leitura de catálogo apenas: não altera reservas, perfis ou outros dados.
 DO $checks$
 DECLARE
@@ -58,6 +58,17 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'bloqueios_sem_sobreposicao' AND contype = 'x') THEN
     missing := array_append(missing, 'Restrição anti-sobreposição de bloqueios ausente');
   END IF;
+  -- As políticas RLS por user_id não bastam se uma FK apontar para o quarto de outra conta.
+  FOREACH function_name IN ARRAY ARRAY[
+    'tarifas_quarto_mesmo_proprietario',
+    'reservas_quarto_mesmo_proprietario',
+    'bloqueios_quarto_mesmo_proprietario',
+    'checkins_reserva_mesmo_proprietario'
+  ] LOOP
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = function_name AND contype = 'f') THEN
+      missing := array_append(missing, 'Relação de isolamento entre proprietários ausente: ' || function_name);
+    END IF;
+  END LOOP;
   IF NOT EXISTS (
     SELECT 1 FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
     WHERE c.relname = 'reservas' AND t.tgname = 'validar_cancelamento' AND NOT t.tgisinternal AND t.tgenabled <> 'D'

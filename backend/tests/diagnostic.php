@@ -35,7 +35,7 @@ try {
     $engines = $query->fetchAll(PDO::FETCH_KEY_PAIR);
     foreach ($tables as $table) report(($engines[$table] ?? '') === 'InnoDB', "Tabela $table em InnoDB");
     $required = [
-        'accounts' => ['id', 'email', 'password_hash'],
+        'accounts' => ['id', 'email', 'password_hash', 'session_version'],
         'pousadas' => ['id', 'owner_id', 'nome', 'slug'],
         'quartos' => ['id', 'pousada_id', 'preco_base_centavos', 'ativo'],
         'reservas' => ['id', 'pousada_id', 'quarto_id', 'estado', 'check_in', 'check_out', 'valor_total_centavos', 'consentimento_em', 'codigo_reserva', 'metodo_pagamento', 'cancelada_em', 'motivo_cancelamento'],

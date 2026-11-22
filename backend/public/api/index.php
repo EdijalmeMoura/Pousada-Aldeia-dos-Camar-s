@@ -8,8 +8,8 @@ header('X-Content-Type-Options: nosniff');
 // Sem rota genérica de escrita. Publicação só depois de testar em MySQL real.
 $action = (string)($_GET['action'] ?? '');
 $method = $_SERVER['REQUEST_METHOD'];
-if (!in_array($action, ['health', 'pousada', 'quartos', 'reservar', 'session', 'register', 'login', 'logout', 'my-rooms', 'my-bookings', 'add-room', 'add-booking', 'my-blocks', 'add-block', 'quote', 'cancel-booking', 'remove-block', 'update-pousada', 'update-room'], true)
-    || (in_array($action, ['reservar', 'register', 'login', 'logout', 'add-room', 'add-booking', 'add-block', 'cancel-booking', 'remove-block', 'update-pousada', 'update-room'], true) ? $method !== 'POST' : $method !== 'GET')) {
+if (!in_array($action, ['health', 'pousada', 'quartos', 'reservar', 'session', 'register', 'login', 'logout', 'my-rooms', 'my-bookings', 'add-room', 'add-booking', 'my-blocks', 'add-block', 'quote', 'cancel-booking', 'remove-block', 'update-pousada', 'update-room', 'change-password'], true)
+    || (in_array($action, ['reservar', 'register', 'login', 'logout', 'add-room', 'add-booking', 'add-block', 'cancel-booking', 'remove-block', 'update-pousada', 'update-room', 'change-password'], true) ? $method !== 'POST' : $method !== 'GET')) {
     http_response_code(404);
     echo json_encode(['error' => 'Rota não disponível']);
     exit;
@@ -36,7 +36,7 @@ try {
         echo json_encode(['status' => 'database_connected']);
         exit;
     }
-    if (in_array($action, ['session', 'register', 'login', 'logout'], true)) {
+    if (in_array($action, ['session', 'register', 'login', 'logout', 'change-password'], true)) {
         require __DIR__ . '/auth.php';
         echo json_encode(authAction($pdo, $action, $config), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         exit;

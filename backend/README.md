@@ -48,7 +48,7 @@ O script recusa-se a correr sem confirmação, sem base com `test` no nome ou se
 
 ## Ensaio HTTP (sessões e pedidos paralelos)
 
-Use **outro domínio de ensaio independente** do domínio de produção, identificado por `test` ou `staging`, com HTTPS, PHP, migrações 001–004 aplicadas numa **base descartável** e `trusted_origin`/`cookie_path` privados corretos. O domínio `projetoredesnordeste.com.br` e os seus subdomínios estão explicitamente bloqueados neste teste. A partir de uma máquina com Node 20+:
+Use **outro domínio de ensaio independente** do domínio de produção, identificado por `test` ou `staging`, com HTTPS, PHP, migrações 001–005 aplicadas numa **base descartável** e `trusted_origin`/`cookie_path` privados corretos. O domínio `projetoredesnordeste.com.br` e os seus subdomínios estão explicitamente bloqueados neste teste. A partir de uma máquina com Node 20+:
 
 ```sh
 RUN_PHP_HTTP_INTEGRATION=I_UNDERSTAND_THIS_CREATES_TEST_ACCOUNTS \
@@ -60,11 +60,11 @@ O ensaio verifica cookies/sessão e CSRF, cria duas contas/quartos, tenta aceder
 
 ## Pacote de ensaio para Hostinger (não é produção)
 
-Com `VITE_BASE_PATH=/test/ npm run package:php:staging`, o projeto gera `artifacts/hospedae-PHP-ENSAIO.zip`. Extraia-o somente na subpasta `/test/` de **um domínio de ensaio separado**, nunca no domínio real. O comando recusa a raiz e caminhos sem segmento final `/test/` ou `/staging/`, e impede a inclusão de variáveis Supabase no build. O ZIP inclui apenas frontend e `backend/public/api/*.php`, sem credenciais ou SQL; as migrações 001–004 e o ficheiro `config.php` privado são preparados separadamente. No servidor PHP, `HOSPEDAE_CONFIG_PATH` precisa de apontar para o caminho absoluto de `config.php` fora de `public_html`. Verifique se a sua configuração Hostinger permite definir essa variável de ambiente e se PHP 8.2+ com PDO MySQL está disponível. Não use esta versão com hóspedes reais. O ZIP local está ignorado pelo Git.
+Com `VITE_BASE_PATH=/test/ npm run package:php:staging`, o projeto gera `artifacts/hospedae-PHP-ENSAIO.zip`. Extraia-o somente na subpasta `/test/` de **um domínio de ensaio separado**, nunca no domínio real. O comando recusa a raiz e caminhos sem segmento final `/test/` ou `/staging/`, e impede a inclusão de variáveis Supabase no build. O ZIP inclui apenas frontend e `backend/public/api/*.php`, sem credenciais ou SQL; as migrações 001–005 e o ficheiro `config.php` privado são preparados separadamente. No servidor PHP, `HOSPEDAE_CONFIG_PATH` precisa de apontar para o caminho absoluto de `config.php` fora de `public_html`. Verifique se a sua configuração Hostinger permite definir essa variável de ambiente e se PHP 8.2+ com PDO MySQL está disponível. Não use esta versão com hóspedes reais. O ZIP local está ignorado pelo Git.
 
 ## Diagnóstico read-only da instalação de ensaio
 
-Antes dos ensaios funcionais, no servidor de **testes**, corra `HOSPEDAE_TEST_CONFIG_PATH=/caminho/privado/config.php php backend/tests/diagnostic.php` por **PHP CLI**. O script verifica PHP 8.2+, extensões `pdo_mysql` e `mbstring`, configuração fora de `public_html`, base com `test` no nome, ligação, motor InnoDB, colunas das migrações 001–004, restrições `CHECK`, chaves estrangeiras e índices únicos. Não faz escrita nem mostra segredos. Um resultado «OK» **não** valida concorrência, sessões ou pagamentos. Nunca carregue `backend/tests/` para a pasta pública.
+Antes dos ensaios funcionais, no servidor de **testes**, corra `HOSPEDAE_TEST_CONFIG_PATH=/caminho/privado/config.php php backend/tests/diagnostic.php` por **PHP CLI**. O script verifica PHP 8.2+, extensões `pdo_mysql` e `mbstring`, configuração fora de `public_html`, base com `test` no nome, ligação, motor InnoDB, colunas das migrações 001–005, restrições `CHECK`, chaves estrangeiras e índices únicos. Não faz escrita nem mostra segredos. Um resultado «OK» **não** valida concorrência, sessões ou pagamentos. Nunca carregue `backend/tests/` para a pasta pública.
 
 ## Nome e link público no painel PHP
 
@@ -73,3 +73,7 @@ Antes dos ensaios funcionais, no servidor de **testes**, corra `HOSPEDAE_TEST_CO
 ## Edição de quartos
 
 `POST ?action=update-room` exige sessão/CSRF, `id`, `nome`, `capacidade`, `preco_base_centavos` e `ativo` booleano. O quarto é bloqueado em transação e só pode pertencer à pousada da sessão. A redução de capacidade é recusada se houver reservas pendentes/confirmadas que ainda não terminaram com mais hóspedes. Desativar retira-o do catálogo público e impede novas reservas, mas **não cancela** reservas existentes; alterar o preço afeta apenas novas cotações, não o valor já gravado. O ensaio HTTP cobre desativação/reativação e a recusa de redução de capacidade. Ainda falta testá-lo num MySQL real.
+
+## Palavra-passe e revogação de sessões — migração 005
+
+Aplique `sql/005_session_version.sql` depois de 001–004 **antes** de publicar o PHP atualizado. O painel permite mudar a palavra-passe com a atual e uma nova de 12–256 caracteres. O servidor guarda apenas `password_hash`, roda o ID da sessão e incrementa `session_version`: outros navegadores ficam sem acesso; sessões criadas antes desta migração precisam de novo login. O ensaio HTTP verifica a revogação e a recusa da palavra-passe antiga. Isto **não** é recuperação de conta: se perder a palavra-passe, ainda não existe um fluxo automático seguro de reposição. Não envie palavras-passe pela conversa nem as guarde no frontend.

@@ -50,13 +50,15 @@ async function run() {
     check(session.status === 200 && typeof session.result.csrf === 'string' && session.cookie, `sessão ${label}`)
     const client = { csrf: session.result.csrf, cookie: session.cookie }
     const unique = randomBytes(8).toString('hex')
+    const email = `hospedae-${unique}@example.invalid`
+    const password = randomBytes(24).toString('hex')
     const registered = await call('register', { session: client, body: {
-      email: `hospedae-${unique}@example.invalid`, password: randomBytes(24).toString('hex'), nome_pousada: `Pousada de ensaio ${label}`,
+      email, password, nome_pousada: `Pousada de ensaio ${label}`,
     } })
     check(registered.status === 200 && registered.result.account?.pousada_id, `registo ${label}`)
     client.cookie = registered.cookie ?? client.cookie
     client.csrf = registered.result.csrf
-    return { ...client, account: registered.result.account }
+    return { ...client, account: registered.result.account, email, password }
   }
   const a = await account('A')
   const b = await account('B')
@@ -110,6 +112,23 @@ async function run() {
   check(conflict.status === 409, 'bloqueio sobre reserva rejeitado')
   const block = await call('add-block', { session: b, body: { quarto_id: roomB, data_inicio: start, data_fim: end, motivo: 'ensaio' } })
   check(block.status === 200, 'bloqueio na outra pousada permitido')
+  const otherSession = await call('session')
+  const second = { cookie: otherSession.cookie, csrf: otherSession.result.csrf }
+  const secondLogin = await call('login', { session: second, body: { email: a.email, password: a.password } })
+  check(secondLogin.status === 200, 'segunda sessão da pousada A')
+  second.cookie = secondLogin.cookie ?? second.cookie
+  second.csrf = secondLogin.result.csrf
+  const newPassword = randomBytes(24).toString('hex')
+  const change = await call('change-password', { session: a, body: { current_password: a.password, new_password: newPassword } })
+  check(change.status === 200 && typeof change.result.csrf === 'string', 'alterar palavra-passe')
+  a.cookie = change.cookie ?? a.cookie
+  a.csrf = change.result.csrf
+  const oldSession = await call('my-rooms', { session: second })
+  check(oldSession.status === 401, 'outra sessão revogada')
+  const oldPassword = await call('login', { session: second, body: { email: a.email, password: a.password } })
+  check(oldPassword.status === 400, 'palavra-passe antiga rejeitada')
+  const newLogin = await call('login', { session: second, body: { email: a.email, password: newPassword } })
+  check(newLogin.status === 200, 'nova palavra-passe aceite')
   console.log('Ensaio HTTP terminado. As contas e dados de ensaio PERMANECEM na base descartável; apague a base após verificar os resultados.')
 }
 

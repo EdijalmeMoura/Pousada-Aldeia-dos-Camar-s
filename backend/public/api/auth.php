@@ -53,9 +53,12 @@ function throttle(PDO $db, string $email): void {
 
 function currentAccount(PDO $db): ?array {
     if (empty($_SESSION['account_id']) || !preg_match('/^[0-9a-f]{32}$/D', $_SESSION['account_id'])) return null;
-    $query = $db->prepare('SELECT HEX(a.id) AS id, a.email, HEX(p.id) AS pousada_id, p.nome AS nome_pousada, p.slug FROM accounts a JOIN pousadas p ON p.owner_id = a.id WHERE a.id = UNHEX(?)');
+    $query = $db->prepare('SELECT HEX(a.id) AS id, a.email, a.session_version, HEX(p.id) AS pousada_id, p.nome AS nome_pousada, p.slug FROM accounts a JOIN pousadas p ON p.owner_id = a.id WHERE a.id = UNHEX(?)');
     $query->execute([$_SESSION['account_id']]);
-    return $query->fetch(PDO::FETCH_ASSOC) ?: null;
+    $account = $query->fetch(PDO::FETCH_ASSOC);
+    if (!$account || (int)($account['session_version'] ?? 0) !== (int)($_SESSION['session_version'] ?? 0)) return null;
+    unset($account['session_version']);
+    return $account;
 }
 
 function authAction(PDO $db, string $action, array $config): array {
@@ -76,6 +79,40 @@ function authAction(PDO $db, string $action, array $config): array {
     if ($action === 'logout') {
         $_SESSION = [];
         session_regenerate_id(true);
+        $_SESSION['csrf'] = bin2hex(random_bytes(32));
+        return ['ok' => true, 'csrf' => $_SESSION['csrf']];
+    }
+    if ($action === 'change-password') {
+        $account = currentAccount($db);
+        if (!$account) throw new RuntimeException('Autenticação necessária.', 401);
+        $current = $body['current_password'] ?? null;
+        $next = $body['new_password'] ?? null;
+        if (!is_string($current) || !is_string($next) || strlen($next) < 12 || strlen($next) > 256) {
+            throw new InvalidArgumentException('A nova palavra-passe deve ter 12 a 256 caracteres.');
+        }
+        limitRequests($db, 'auth-ip', 25);
+        throttle($db, $account['email']);
+        $db->beginTransaction();
+        try {
+            $lookup = $db->prepare('SELECT password_hash, session_version FROM accounts WHERE id = UNHEX(?) FOR UPDATE');
+            $lookup->execute([$account['id']]);
+            $row = $lookup->fetch(PDO::FETCH_ASSOC);
+            if (!$row || !password_verify($current, $row['password_hash'])) {
+                throw new InvalidArgumentException('Palavra-passe atual incorreta.');
+            }
+            if (password_verify($next, $row['password_hash'])) {
+                throw new InvalidArgumentException('Escolha uma palavra-passe diferente da atual.');
+            }
+            $version = (int)$row['session_version'] + 1;
+            $update = $db->prepare('UPDATE accounts SET password_hash = ?, session_version = ? WHERE id = UNHEX(?)');
+            $update->execute([password_hash($next, PASSWORD_DEFAULT), $version, $account['id']]);
+            $db->commit();
+        } catch (Throwable $error) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $error;
+        }
+        session_regenerate_id(true);
+        $_SESSION['session_version'] = $version;
         $_SESSION['csrf'] = bin2hex(random_bytes(32));
         return ['ok' => true, 'csrf' => $_SESSION['csrf']];
     }
@@ -108,21 +145,31 @@ function authAction(PDO $db, string $action, array $config): array {
             }
             throw $error;
         }
+        $version = 1;
     } else {
-        $find = $db->prepare('SELECT HEX(id) AS id, password_hash FROM accounts WHERE email = ?');
-        $find->execute([$email]);
-        $row = $find->fetch(PDO::FETCH_ASSOC);
-        if (!$row || !password_verify($password, $row['password_hash'])) {
-            throw new InvalidArgumentException('E-mail ou palavra-passe incorretos.');
+        $db->beginTransaction();
+        try {
+            $find = $db->prepare('SELECT HEX(id) AS id, password_hash, session_version FROM accounts WHERE email = ? FOR UPDATE');
+            $find->execute([$email]);
+            $row = $find->fetch(PDO::FETCH_ASSOC);
+            if (!$row || !password_verify($password, $row['password_hash'])) {
+                throw new InvalidArgumentException('E-mail ou palavra-passe incorretos.');
+            }
+            if (password_needs_rehash($row['password_hash'], PASSWORD_DEFAULT)) {
+                $db->prepare('UPDATE accounts SET password_hash = ? WHERE id = UNHEX(?)')
+                    ->execute([password_hash($password, PASSWORD_DEFAULT), $row['id']]);
+            }
+            $id = strtolower($row['id']);
+            $version = (int)$row['session_version'];
+            $db->commit();
+        } catch (Throwable $error) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $error;
         }
-        if (password_needs_rehash($row['password_hash'], PASSWORD_DEFAULT)) {
-            $db->prepare('UPDATE accounts SET password_hash = ? WHERE id = UNHEX(?)')
-                ->execute([password_hash($password, PASSWORD_DEFAULT), $row['id']]);
-        }
-        $id = strtolower($row['id']);
     }
     session_regenerate_id(true);
     $_SESSION['account_id'] = $id;
+    $_SESSION['session_version'] = $version;
     $_SESSION['csrf'] = bin2hex(random_bytes(32));
     return ['account' => currentAccount($db), 'csrf' => $_SESSION['csrf']];
 }

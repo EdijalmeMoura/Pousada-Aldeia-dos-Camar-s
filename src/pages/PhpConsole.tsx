@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { PasswordSettings } from "@/components/php/PasswordSettings"
 import { RoomEditor } from "@/components/php/RoomEditor"
 import { PousadaSettings } from "@/components/php/PousadaSettings"
 import { CalendarOperations } from "@/components/php/CalendarOperations"
@@ -47,6 +48,7 @@ export default function PhpConsole() {
     <header className="flex flex-wrap items-center justify-between gap-4"><div><h1 className="text-2xl font-bold">{profile?.nome_pousada}</h1><p className="text-sm text-muted-foreground">Gestão PHP em ensaio · sem cobrança integrada</p></div><Button variant="outline" onClick={async () => { try { await signOut(); navigate("/login") } catch { toast.error("Não foi possível terminar a sessão") } }}>Sair</Button></header>
     <p role="status" className="rounded-xl border bg-accent p-4 text-sm">Este painel reduzido ainda não substitui as funcionalidades antigas. Não cobre tarifas sazonais, pagamentos ou check-in. Não use dados reais antes dos testes no alojamento.</p>
     <PousadaSettings />
+    <PasswordSettings />
     <div className="grid gap-6 lg:grid-cols-2">
       <Card><CardHeader><CardTitle>Quartos</CardTitle></CardHeader><CardContent className="space-y-4">
         <form onSubmit={createRoom} className="space-y-3"><Label htmlFor="room-name">Nome</Label><Input id="room-name" required minLength={2} maxLength={160} value={room.nome} onChange={e => setRoom({ ...room, nome: e.target.value })} /><Label htmlFor="capacity">Capacidade</Label><Input id="capacity" type="number" min={1} max={50} required value={room.capacidade} onChange={e => setRoom({ ...room, capacidade: Number(e.target.value) })} /><Label htmlFor="price">Preço por noite (R$)</Label><Input id="price" type="number" min="1" step="0.01" required value={room.preco_base} onChange={e => setRoom({ ...room, preco_base: e.target.value })} /><Button disabled={busy}>Adicionar quarto</Button></form>

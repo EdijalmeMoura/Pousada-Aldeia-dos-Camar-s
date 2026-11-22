@@ -10,7 +10,9 @@
     "test": "vitest run",
     "build:production": "node scripts/build-production.mjs",
     "test:deploy": "node --test scripts/deployment-check.node.mjs",
-    "test:supabase": "node scripts/supabase-integration.mjs"
+    "test:supabase": "node scripts/supabase-integration.mjs",
+    "package:hostinger": "python3 scripts/package_hostinger.py",
+    "package:hostinger:demo": "python3 scripts/package_hostinger.py --demo"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",

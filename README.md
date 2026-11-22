@@ -152,3 +152,7 @@ O comando `npm run test:supabase` prepara um teste de integração bloqueado por
 ## Atualizações para administradores
 
 Em **Configurações → Atualizações**, contas com `user_roles.role = admin` podem consultar uma seleção de alterações do projeto e abrir os commits no GitHub. A role é consultada via RLS; no modo local, apenas a conta de demonstração mostra uma pré-visualização sem permissões reais. O histórico é editorial e incluído no build: **não** indica se uma migração foi aplicada, se o código publicado na Hostinger está atualizado, nem instala versões. Não coloque segredos ou notas privadas nessa lista estática, pois o bundle frontend é público. A primeira role `admin` deve ser provisionada por um operador autorizado no Supabase, nunca pelo registo público.
+
+## Pacote para Hostinger
+
+Para publicar uma **demonstração** no Premium Web Hosting, execute `npm run package:hostinger:demo` e extraia o ZIP produzido em `artifacts/` diretamente para `public_html`. O pacote inclui `.htaccess` e instruções. Para um pacote de produção, use `npm run package:hostinger`: este comando exige Supabase configurado no build e falha de propósito se faltar. Ambos os pacotes contêm apenas o frontend; o backend e a InfinitePay requerem configuração e testes à parte. Consulte `docs/DEPLOY-HOSTINGER.md`.

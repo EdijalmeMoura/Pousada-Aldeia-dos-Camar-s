@@ -19,3 +19,10 @@ Depois de aplicar as treze migrações, execute `supabase/tests/production_check
 ## Teste de integração num projeto Supabase de ensaio
 
 Depois das migrações `001`–`013` e do diagnóstico SQL, execute `npm run test:supabase` **apenas num projeto de ensaio descartável**. O comando fica bloqueado por defeito. Para o ativar, defina no terminal variáveis de ambiente privadas `RUN_SUPABASE_INTEGRATION=I_UNDERSTAND_THIS_CREATES_TEST_DATA`, `SUPABASE_TEST_URL`, `SUPABASE_TEST_ANON_KEY` (chave pública) e `SUPABASE_TEST_SERVICE_ROLE_KEY` (segredo **só no terminal/CI protegido**). Não coloque estas variáveis em ficheiros `VITE_*`, na Hostinger, no repositório ou nesta conversa. O ensaio cria duas contas de teste, verifica RLS, separação de quartos/tarifas, leitura pública filtrada, declaração de privacidade, cotação e conflito de reservas; tenta apagar as contas no fim. Se a limpeza falhar, apague manualmente os utilizadores com prefixo `hospedae-test-` na consola do projeto de ensaio. **Não execute em produção**: os testes criam e apagam dados e não validam pagamentos reais nem o webhook.
+
+## Pacote ZIP pronto a extrair
+
+- `npm run package:hostinger:demo` gera `artifacts/hospedae-hostinger-DEMONSTRACAO.zip` para **pré-visualização apenas**. O aviso dentro do ZIP explica que as reservas não são partilhadas entre navegadores.
+- `npm run package:hostinger` gera `artifacts/hospedae-hostinger-PRODUCAO.zip` **só** depois de `build:production` validar as variáveis públicas Supabase. Isto não comprova que o backend está configurado: siga as etapas anteriores antes de disponibilizar o domínio.
+- No Gestor de Ficheiros da Hostinger, carregue o ZIP para `public_html` e extraia-o **aí**, sem criar uma subpasta adicional. Confirme que `index.html`, `.htaccess`, `assets/`, `images/` e `LEIA-ME-INSTALACAO.txt` estão diretamente na raiz pública.
+- Os ZIPs em `artifacts/` são artefactos locais ignorados pelo Git; o código do instalador e os testes ficam no repositório. Nunca coloque segredos no ZIP nem no `public_html`.

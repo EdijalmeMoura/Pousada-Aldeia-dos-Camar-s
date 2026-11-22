@@ -17,3 +17,7 @@ Aplique `sql/002_booking_code.sql` e `sql/003_auth_rate_limit.sql` após 001. O 
 ## Calendário e cotação — ainda em ensaio
 
 `GET ?action=my-blocks` lista apenas os bloqueios da sessão. `POST ?action=add-block` recebe `quarto_id`, `data_inicio`, `data_fim` (fim exclusivo) e `motivo`; usa `SELECT ... FOR UPDATE` no quarto antes de verificar sobreposições. `GET ?action=quote&slug=...&quarto_id=...&check_in=...&check_out=...&adultos=...` dá uma cotação informativa sem dados de hóspedes; o valor e a disponibilidade são recalculados ao criar a reserva. Neste primeiro esquema a tarifa é fixa por quarto, sem tarifário sazonal. A tabela de bloqueios não deve ser manipulada fora destes caminhos: outras escritas têm de usar a mesma disciplina transacional. Endpoints ainda não ligados ao frontend nem testados num MySQL real.
+
+## Integração pública do frontend (fase experimental)
+
+`VITE_BACKEND=php` no build faz a página pública usar o endpoint PHP **na mesma subpasta do site**; não envia pedidos a localhost nem guarda reservas em `localStorage`. Os quartos são apresentados sem descrição/fotografia até existir esse suporte no esquema MySQL. Com esta opção, a área interna fica intencionalmente indisponível: as contas PHP e as operações internas ainda não estão ligadas à interface. `npm run package:hostinger` continua a exigir Supabase; não há pacote de produção PHP nesta fase. Não use o ZIP de demonstração antigo nem publique uma versão com dados reais enquanto não houver fluxo interno e testes de ponta a ponta no alojamento.

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { getProfile, newProfile, saveProfile, type Profile } from "@/lib/db"
+import { isPhpBackend } from "@/lib/phpBackend"
 import { hashDemoPassword, verifyDemoPassword, type DemoAccount } from "@/lib/demoCredentials"
 
 interface User { id: string; email: string; nome?: string }
@@ -28,7 +29,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     ;(async () => {
-      if (isSupabaseConfigured && supabase) {
+      if (isPhpBackend) {
+        // Autenticação PHP só será ativada quando as operações internas estiverem integradas.
+        setUser(null); setProfile(null)
+      } else if (isSupabaseConfigured && supabase) {
         const { data } = await supabase.auth.getSession()
         const u = data.session?.user
         if (u) { const usr = { id: u.id, email: u.email!, nome: u.user_metadata?.nome }; setUser(usr); await loadProfile(usr) }
@@ -46,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signUp = async (email: string, password: string, nome: string) => {
+    if (isPhpBackend) throw new Error("A área interna ainda não está disponível neste modo.")
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { nome } } })
       if (error) throw error
@@ -63,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signIn = async (email: string, password: string) => {
+    if (isPhpBackend) throw new Error("A área interna ainda não está disponível neste modo.")
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
@@ -81,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signInGoogle = async () => {
+    if (isPhpBackend) throw new Error("Entrada Google indisponível no backend PHP.")
     if (isSupabaseConfigured && supabase) {
       const { error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo: new URL(`${import.meta.env.BASE_URL}onboarding`, location.origin).href } })
       if (error) throw error

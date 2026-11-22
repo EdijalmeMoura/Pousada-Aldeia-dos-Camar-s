@@ -9,6 +9,7 @@ import { publicPousada, publicQuartos, createPublicBooking, quotePublicBooking, 
 import { brl, useSeo } from "@/lib/utils"
 import { publicBookingSchema, type PublicBookingForm } from "@/lib/bookingValidation"
 import { isSupabaseConfigured } from "@/lib/supabase"
+import { isPhpBackend } from "@/lib/phpBackend"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -86,7 +87,7 @@ export default function PublicBooking() {
       </section>
 
       <main className="mx-auto max-w-7xl px-4 py-10 md:px-6">
-        {!isSupabaseConfigured && <p role="status" className="mb-6 rounded-xl border border-border bg-accent px-4 py-3 text-sm">Modo de demonstração: as reservas são guardadas apenas neste navegador e não são partilhadas com a pousada.</p>}
+        {!isSupabaseConfigured && !isPhpBackend && <p role="status" className="mb-6 rounded-xl border border-border bg-accent px-4 py-3 text-sm">Modo de demonstração: as reservas são guardadas apenas neste navegador e não são partilhadas com a pousada.</p>}
         {done ? (
           <Card className="animate-fade-up mx-auto max-w-lg shadow-lg"><CardContent className="space-y-4 p-8 text-center">
             <span className="bg-hero-gradient mx-auto flex h-16 w-16 items-center justify-center rounded-full text-white shadow-lg"><Check className="h-8 w-8" /></span>

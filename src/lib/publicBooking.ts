@@ -1,6 +1,7 @@
 import { dbInsert, dbList, type Profile, type Quarto, type Reserva, type Tarifa, type Bloqueio } from "./db"
 import { isSupabaseConfigured, supabase } from "./supabase"
 import { uid } from "./utils"
+import { isPhpBackend, phpRequest } from "./phpBackend"
 
 export type PublicPousada = Pick<Profile, "id" | "nome_pousada" | "slug" | "cor" | "logo_url">
 export type PublicQuarto = Pick<Quarto, "id" | "nome" | "descricao" | "capacidade" | "preco_base" | "comodidades" | "foto_url" | "ativo">
@@ -10,6 +11,10 @@ export type PublicBookingInput = BookingInput & { aceito_privacidade: boolean }
 export type BookingResult = Pick<Reserva, "codigo_reserva" | "valor_total">
 
 export async function publicPousada(slug: string): Promise<PublicPousada | null> {
+  if (isPhpBackend) {
+    const p = await phpRequest<{ id: string; nome_pousada: string; slug: string } | null>("pousada", { slug })
+    return p ? { ...p, cor: "#0891b2", logo_url: "" } : null
+  }
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.rpc("public_pousada", { p_slug: slug }).maybeSingle()
     if (error) throw error
@@ -21,6 +26,10 @@ export async function publicPousada(slug: string): Promise<PublicPousada | null>
 }
 
 export async function publicQuartos(slug: string, ownerId: string): Promise<PublicQuarto[]> {
+  if (isPhpBackend) {
+    const rooms = await phpRequest<Array<Pick<PublicQuarto, "id" | "nome" | "capacidade" | "preco_base">>>("quartos", { slug })
+    return rooms.map(room => ({ ...room, preco_base: Number(room.preco_base), descricao: "", comodidades: "", foto_url: "", ativo: true }))
+  }
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.rpc("public_quartos", { p_slug: slug })
     if (error) throw error
@@ -43,6 +52,9 @@ export function bookingDates(input: Pick<BookingInput, "check_in" | "check_out" 
 
 export async function quotePublicBooking(slug: string, ownerId: string, room: PublicQuarto, input: Pick<BookingInput, "check_in" | "check_out" | "adultos">): Promise<BookingQuote> {
   const nights = bookingDates(input, room.capacidade)
+  if (isPhpBackend) return phpRequest<BookingQuote>("quote", {
+    slug, quarto_id: room.id, check_in: input.check_in, check_out: input.check_out, adultos: String(input.adultos),
+  })
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.rpc("cotar_reserva_publica", {
       p_slug: slug, p_quarto_id: room.id, p_entrada: input.check_in,
@@ -72,6 +84,7 @@ export async function quotePublicBooking(slug: string, ownerId: string, room: Pu
 export async function createPublicBooking(slug: string, ownerId: string, room: PublicQuarto, input: PublicBookingInput): Promise<BookingResult> {
   if (input.aceito_privacidade !== true) throw new Error("É necessário aceitar os termos e a política de privacidade.")
   bookingDates(input, room.capacidade)
+  if (isPhpBackend) return phpRequest<BookingResult>("reservar", {}, { slug, quarto_id: room.id, ...input })
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.rpc("criar_reserva_publica_com_consentimento", {
       p_slug: slug, p_quarto_id: room.id, p_nome: input.nome_hospede,

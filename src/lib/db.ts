@@ -1,4 +1,5 @@
 import { supabase, isSupabaseConfigured } from "./supabase"
+import { isPhpBackend } from "./phpBackend"
 import { uid, slugify } from "./utils"
 
 /**
@@ -56,6 +57,7 @@ function readAll(): Record<Table, any[]> {
 function writeAll(db: Record<Table, any[]>) { localStorage.setItem(LS, JSON.stringify(db)) }
 
 export async function dbList<T>(table: Table, userId?: string): Promise<T[]> {
+  if (isPhpBackend) throw new Error("Área interna indisponível no backend PHP.")
   if (isSupabaseConfigured && supabase) {
     let q = supabase.from(table).select("*").order("created_at", { ascending: false })
     if (userId) q = q.eq("user_id", userId)
@@ -69,6 +71,7 @@ export async function dbList<T>(table: Table, userId?: string): Promise<T[]> {
 }
 
 export async function dbInsert<T extends Record<string, any>>(table: Table, row: Omit<T, "created_at" | "updated_at"> & Partial<Pick<T, "created_at" | "updated_at">>): Promise<T> {
+  if (isPhpBackend) throw new Error("Área interna indisponível no backend PHP.")
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.from(table).insert(row as any).select().single()
     if (error) throw error
@@ -83,6 +86,7 @@ export async function dbInsert<T extends Record<string, any>>(table: Table, row:
 }
 
 export async function dbUpdate<T extends Record<string, any>>(table: Table, id: string, patch: Partial<T>): Promise<T> {
+  if (isPhpBackend) throw new Error("Área interna indisponível no backend PHP.")
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.from(table).update(patch as any).eq("id", id).select().single()
     if (error) throw error
@@ -97,6 +101,7 @@ export async function dbUpdate<T extends Record<string, any>>(table: Table, id: 
 }
 
 export async function dbDelete(table: Table, id: string) {
+  if (isPhpBackend) throw new Error("Área interna indisponível no backend PHP.")
   if (isSupabaseConfigured && supabase) {
     const { error } = await supabase.from(table).delete().eq("id", id)
     if (error) throw error
@@ -123,6 +128,7 @@ export function newProfile(user: { id: string; email: string; nome?: string }): 
 }
 
 export async function getProfileBySlug(slug: string): Promise<Profile | null> {
+  if (isPhpBackend) throw new Error("Área interna indisponível no backend PHP.")
   if (isSupabaseConfigured && supabase) {
     const { data } = await supabase.from("profiles").select("*").eq("slug", slug).maybeSingle()
     return data as Profile | null
@@ -132,6 +138,7 @@ export async function getProfileBySlug(slug: string): Promise<Profile | null> {
 }
 
 export async function getProfile(id: string): Promise<Profile | null> {
+  if (isPhpBackend) throw new Error("Área interna indisponível no backend PHP.")
   if (isSupabaseConfigured && supabase) {
     const { data } = await supabase.from("profiles").select("*").eq("id", id).maybeSingle()
     return data as Profile | null
@@ -141,6 +148,7 @@ export async function getProfile(id: string): Promise<Profile | null> {
 }
 
 export async function saveProfile(p: Profile) {
+  if (isPhpBackend) throw new Error("Área interna indisponível no backend PHP.")
   if (isSupabaseConfigured && supabase) {
     const { error } = await supabase.from("profiles").upsert(p)
     if (error) throw error

@@ -155,6 +155,7 @@ export async function saveProfile(p: Profile) {
 
 /** Dados de demonstração: 3 quartos com fotos, tarifas e reservas */
 export async function seedDemo(userId: string) {
+  if (isSupabaseConfigured) throw new Error("Dados de demonstração não podem ser carregados numa conta Supabase.")
   const quartos: Quarto[] = [
     { id: uid(), user_id: userId, nome: "Quarto Maré Alta", descricao: "Vista para o mar, cama king e varanda privativa.", capacidade: 2, preco_base: 320, comodidades: "Wi-Fi, ar-condicionado, pequeno-almoço incluído", foto_url: "/images/quarto-1.jpg", ativo: true, codigo: "4821", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
     { id: uid(), user_id: userId, nome: "Chalé Serra Verde", descricao: "Aconchegante, com lareira e vista para as colinas.", capacidade: 4, preco_base: 450, comodidades: "Wi-Fi, lareira, cozinha equipada", foto_url: "/images/quarto-2.jpg", ativo: true, codigo: "4822", created_at: new Date().toISOString(), updated_at: new Date().toISOString() },

@@ -6,6 +6,7 @@ import { z } from "zod"
 import { toast } from "sonner"
 import { BedDouble, Loader2, Pencil, Plus, Sparkles, Trash2 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { isSupabaseConfigured } from "@/lib/supabase"
 import { dbDelete, dbInsert, dbList, dbUpdate, logActivity, seedDemo, type Quarto, type Tarifa } from "@/lib/db"
 import { brl, uid, useSeo } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -114,7 +115,7 @@ export default function Quartos() {
           </div>
 
           {quartosQ.isLoading ? <div className="grid gap-4 md:grid-cols-2"><Skeleton className="h-40" /><Skeleton className="h-40" /></div>
-            : (quartosQ.data ?? []).length === 0 ? <Card><CardContent><EmptyState icon={BedDouble} titulo="Nenhum quarto ainda" subtitulo="Cadastre o primeiro quarto para ativar o seu link direto de reserva — ou explore com dados de demonstração." cta="Cadastrar quarto" onCta={() => setOpenQ(true)} /><div className="flex justify-center pb-4"><Button variant="outline" onClick={async () => { await seedDemo(user!.id); toast.success("Dados de demonstração carregados!"); qc.invalidateQueries({ queryKey: ["quartos"] }); qc.invalidateQueries({ queryKey: ["reservas"] }); qc.invalidateQueries({ queryKey: ["tarifas"] }) }}><Sparkles className="h-4 w-4" /> Carregar demonstração</Button></div></CardContent></Card>
+            : (quartosQ.data ?? []).length === 0 ? <Card><CardContent><EmptyState icon={BedDouble} titulo="Nenhum quarto ainda" subtitulo="Cadastre o primeiro quarto para ativar o seu link direto de reserva." cta="Cadastrar quarto" onCta={() => setOpenQ(true)} />{!isSupabaseConfigured && <div className="flex justify-center pb-4"><Button variant="outline" onClick={async () => { await seedDemo(user!.id); toast.success("Dados de demonstração carregados!"); qc.invalidateQueries({ queryKey: ["quartos"] }); qc.invalidateQueries({ queryKey: ["reservas"] }); qc.invalidateQueries({ queryKey: ["tarifas"] }) }}><Sparkles className="h-4 w-4" /> Carregar demonstração</Button></div>}</CardContent></Card>
             : (
               <div className="grid gap-4 md:grid-cols-2">
                 {(quartosQ.data ?? []).map((q) => (

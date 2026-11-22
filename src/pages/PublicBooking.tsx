@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
-import { BedDouble, CalendarCheck, Check, Loader2, ShieldCheck, Star, Users } from "lucide-react"
+import { BedDouble, CalendarCheck, Check, Loader2, ShieldCheck, Users } from "lucide-react"
 import { publicPousada, publicQuartos, createPublicBooking, quotePublicBooking, type PublicQuarto } from "@/lib/publicBooking"
 import { brl, useSeo } from "@/lib/utils"
 import { isSupabaseConfigured } from "@/lib/supabase"
@@ -16,6 +16,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/EmptyState"
+import { RoomPhoto } from "@/components/RoomPhoto"
 
 const schema = z.object({
   nome_hospede: z.string().min(2, "Indique o seu nome"),
@@ -27,8 +28,6 @@ const schema = z.object({
   metodo_pagamento: z.enum(["pix", "cartao"]),
 })
 type Form = z.infer<typeof schema>
-
-const fallbackImg = ["/images/quarto-1.jpg", "/images/quarto-2.jpg", "/images/quarto-3.jpg"]
 
 export default function PublicBooking() {
   const { slug } = useParams<{ slug: string }>()
@@ -82,17 +81,17 @@ export default function PublicBooking() {
       <header className="fixed inset-x-0 top-0 z-40 border-b border-white/10 bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-6">
           <span className="flex items-center gap-2 font-bold"><span className="bg-hero-gradient flex h-8 w-8 items-center justify-center rounded-xl text-white"><BedDouble className="h-4 w-4" /></span>{p.nome_pousada || "Pousada"}</span>
-          <Badge variant="secondary"><Star className="mr-1 h-3 w-3 fill-current" /> Reserva direta · Sem taxa</Badge>
+          <Badge variant="secondary">Reserva direta · Sem taxa</Badge>
         </div>
       </header>
 
       <section className="relative pt-16">
         <div className="relative h-64 overflow-hidden md:h-80">
-          <img src="/images/hero.jpg" alt={`Vista da ${p.nome_pousada || "pousada"}`} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+          <div className="absolute inset-0 bg-hero-gradient" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           <div className="absolute inset-x-0 bottom-0 mx-auto max-w-7xl px-4 pb-8 text-white md:px-6">
             <h1 className="text-3xl font-bold md:text-4xl">{p.nome_pousada || "Pousada"}</h1>
-            <p className="mt-1 flex items-center gap-2 text-sm text-white/85"><Star className="h-4 w-4 fill-current" /> Reserve diretamente, sem intermediários</p>
+            <p className="mt-1 flex items-center gap-2 text-sm text-white/85">Reserve diretamente, sem intermediários</p>
           </div>
         </div>
       </section>
@@ -117,7 +116,7 @@ export default function PublicBooking() {
                   {quartos.map((q, i) => (
                     <Card key={q.id} className="animate-fade-up group overflow-hidden transition-all duration-200 hover:-translate-y-1 hover:shadow-xl" style={{ animationDelay: `${i * 100}ms` }}>
                       <div className="relative h-48 overflow-hidden">
-                        <img src={q.foto_url || fallbackImg[i % 3]} alt={q.nome} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                        <RoomPhoto src={q.foto_url} name={q.nome} className="h-full transition-transform duration-500 group-hover:scale-105" />
                         <Badge className="absolute left-3 top-3 border-white/30 bg-black/40 text-white backdrop-blur">Direto · sem taxa</Badge>
                       </div>
                       <CardContent className="space-y-3 p-5">
@@ -138,7 +137,7 @@ export default function PublicBooking() {
         ) : (
           <div className="grid gap-6 lg:grid-cols-5">
             <Card className="overflow-hidden lg:col-span-2">
-              <img src={selected.foto_url || "/images/quarto-1.jpg"} alt={selected.nome} className="h-56 w-full object-cover" />
+              <RoomPhoto src={selected.foto_url} name={selected.nome} className="h-56" />
               <CardContent className="space-y-2 p-5">
                 <h2 className="text-xl font-bold">{selected.nome}</h2>
                 <p className="text-sm text-muted-foreground">{selected.descricao}</p>

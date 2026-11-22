@@ -1,4 +1,4 @@
--- Execute no SQL Editor do projeto Supabase, DEPOIS das migrações 001–012.
+-- Execute no SQL Editor do projeto Supabase, DEPOIS das migrações 001–013.
 -- Leitura de catálogo apenas: não altera reservas, perfis ou outros dados.
 DO $checks$
 DECLARE
@@ -52,6 +52,9 @@ BEGIN
     END IF;
   END LOOP;
 
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'profiles_slug_usable' AND contype = 'c') THEN
+    missing := array_append(missing, 'Restrição de slugs reservados ausente');
+  END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'reservas_sem_sobreposicao' AND contype = 'x') THEN
     missing := array_append(missing, 'Restrição anti-sobreposição de reservas ausente');
   END IF;

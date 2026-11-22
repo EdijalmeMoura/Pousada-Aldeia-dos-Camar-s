@@ -9,6 +9,7 @@ import { ArrowLeft, ArrowRight, Check, Loader2, Palette, User } from "lucide-rea
 import { useAuth } from "@/hooks/useAuth"
 import { saveProfile } from "@/lib/db"
 import { slugify, useSeo } from "@/lib/utils"
+import { publicSlug } from "@/lib/publicSlug"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -46,6 +47,7 @@ export default function Onboarding() {
       setValue("slug", slugify(pousada))
     }
     if (step === 1) {
+      try { publicSlug(watch("slug")) } catch (e) { toast.error(e instanceof Error ? e.message : "Link inválido"); return }
       if (watch("whatsapp").replace(/\D/g, "").length < 10) { toast.error("Indique um WhatsApp válido com DDD."); return }
     }
     setStep((s) => Math.min(s + 1, 2))
@@ -54,11 +56,11 @@ export default function Onboarding() {
   const finish = async (data: Form) => {
     if (!profile) return
     try {
-      await saveProfile({ ...profile, ...data, onboarding_concluido: true })
+      await saveProfile({ ...profile, ...data, slug: publicSlug(data.slug), onboarding_concluido: true })
       await refreshProfile()
       toast.success("Pousada configurada! Bem-vindo(a) ao painel.")
       navigate("/app")
-    } catch { toast.error("Não foi possível guardar. Tente novamente.") }
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível guardar. Verifique se o link já está em uso.") }
   }
 
   return (
@@ -101,7 +103,7 @@ export default function Onboarding() {
             {step === 2 && (
               <div className="space-y-4">
                 <h1 className="flex items-center gap-2 text-xl font-bold"><Check className="h-5 w-5 text-primary" /> Primeira ação: regras da casa</h1>
-                <p className="text-sm text-muted-foreground">A IA usa estas regras no check-in conversacional e envia-as ao hóspede com o código do quarto.</p>
+                <p className="text-sm text-muted-foreground">A IA ajuda a preparar as regras. O envio ao hóspede e o código real do quarto exigem revisão humana.</p>
                 <div className="space-y-2"><Label htmlFor="regras_casa">Regras da casa</Label><Textarea id="regras_casa" {...register("regras_casa")} placeholder="Ex.: Check-in a partir das 14h, check-out até às 11h, sem fumar nos quartos…" />{errors.regras_casa && <p className="text-sm text-destructive">{errors.regras_casa.message}</p>}</div>
               </div>
             )}

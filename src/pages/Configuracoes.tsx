@@ -5,7 +5,8 @@ import { useAuth } from "@/hooks/useAuth"
 import { saveProfile } from "@/lib/db"
 import { validatePaymentDetails } from "@/lib/manualPayment"
 import { waLink, waTemplates } from "@/lib/supabase"
-import { slugify, useSeo } from "@/lib/utils"
+import { useSeo } from "@/lib/utils"
+import { publicSlug } from "@/lib/publicSlug"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -29,18 +30,21 @@ export default function Configuracoes() {
   const [copied, setCopied] = useState(false)
 
   if (!profile) return null
-  const publicUrl = `${location.origin}/${slug || profile.slug}`
+  const publicUrl = `${location.origin}/${profile.slug}`
 
   const save = async () => {
     if (infinitepayHandle && !/^[a-zA-Z0-9_-]{3,80}$/.test(infinitepayHandle)) { toast.error("InfiniteTag inválida: use apenas letras, números, hífen ou sublinhado."); return }
+    let validatedSlug: string
+    try { validatedSlug = publicSlug(slug) } catch (e) { toast.error(e instanceof Error ? e.message : "Link inválido"); return }
     const erro = validatePaymentDetails(chavePix.trim(), linkPagamento.trim())
     if (erro) { toast.error(erro); return }
     setSaving(true)
     try {
-      await saveProfile({ ...profile, nome, nome_pousada: pousada, slug: slugify(slug), whatsapp, regras_casa: regras, chave_pix: chavePix.trim(), link_pagamento: linkPagamento.trim(), infinitepay_handle: infinitepayHandle.trim() })
+      await saveProfile({ ...profile, nome, nome_pousada: pousada, slug: validatedSlug, whatsapp, regras_casa: regras, chave_pix: chavePix.trim(), link_pagamento: linkPagamento.trim(), infinitepay_handle: infinitepayHandle.trim() })
       await refreshProfile()
+      setSlug(validatedSlug)
       toast.success("Configurações guardadas!")
-    } catch { toast.error("Não foi possível guardar.") }
+    } catch { toast.error("Não foi possível guardar. Verifique se o link já está em uso.") }
     setSaving(false)
   }
 
@@ -65,7 +69,7 @@ export default function Configuracoes() {
               </div>
               <div className="space-y-2"><Label htmlFor="slug">Link público (slug)</Label>
                 <div className="flex gap-2"><Input id="slug" value={slug} onChange={(e) => setSlug(e.target.value)} /><Button variant="outline" onClick={copy}>{copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} Copiar</Button></div>
-                <p className="text-xs text-muted-foreground">Endereço público: <a className="text-primary hover:underline" href={publicUrl} target="_blank" rel="noreferrer">{publicUrl}</a></p>
+                <p className="text-xs text-muted-foreground">Endereço guardado (guarde as alterações antes de partilhar um novo link): <a className="text-primary hover:underline" href={publicUrl} target="_blank" rel="noreferrer">{publicUrl}</a></p>
               </div>
               <div className="space-y-2"><Label htmlFor="regras">Regras da casa (usadas no check-in IA)</Label><Textarea id="regras" value={regras} onChange={(e) => setRegras(e.target.value)} /></div>
               <Button onClick={save} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />} <Save className="h-4 w-4" /> Guardar alterações</Button>

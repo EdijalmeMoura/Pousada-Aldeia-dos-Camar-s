@@ -111,7 +111,7 @@ Consulte [docs/DEPLOY-HOSTINGER.md](docs/DEPLOY-HOSTINGER.md) para a sequência 
 
 ## Diagnóstico de segurança no Supabase
 
-Depois de aplicar as migrações `001`–`012`, execute `supabase/tests/production_checks.sql` no SQL Editor. O script verifica RLS, permissões `anon`, funções RPC e restrições/triggers essenciais sem alterar dados. Não foi executado neste repositório: é necessário um projeto Supabase real. O resultado não substitui ensaios de isolamento com duas contas e um hóspede anónimo.
+Depois de aplicar as migrações `001`–`013`, execute `supabase/tests/production_checks.sql` no SQL Editor. O script verifica RLS, permissões `anon`, funções RPC e restrições/triggers essenciais sem alterar dados. Não foi executado neste repositório: é necessário um projeto Supabase real. O resultado não substitui ensaios de isolamento com duas contas e um hóspede anónimo.
 
 ## Fotografias da pousada
 
@@ -136,3 +136,7 @@ A conversa de `/app/checkin` é uma **simulação operada pela pousada**, não u
 ## Declaração de privacidade na reserva pública
 
 Aplique `supabase/migrations/012_public_consent.sql` após a `011`. O formulário público exige aceitação dos Termos e da Política de privacidade antes da reserva; a nova função `criar_reserva_publica_com_consentimento` rejeita pedidos sem aceitação e regista `consentimento_em` no servidor. A função pública anterior deixa de ser executável por anónimos; a criação interna da pousada continua separada e não é apresentada como consentimento do hóspede. Um booleano enviado pelo navegador não comprova identidade nem substitui revisão jurídica, informação transparente e gestão adequada de dados pessoais.
+
+## Slugs públicos seguros
+
+Aplique `supabase/migrations/013_reserved_slugs.sql` depois da `012`. O onboarding e as configurações rejeitam nomes que colidam com rotas internas (`/app`, `/login`, `/termos`, etc.) e mantêm links entre 3 e 40 caracteres. O botão **Copiar** partilha apenas o link já guardado, não um valor ainda por submeter. O banco mantém unicidade e a migração limita também o slug inicial gerado ao criar uma conta. Se existirem slugs antigos incompatíveis com a regra, reveja-os antes de aplicar a migração.

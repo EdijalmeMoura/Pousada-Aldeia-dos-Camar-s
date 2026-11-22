@@ -116,7 +116,7 @@ export function newProfile(user: { id: string; email: string; nome?: string }): 
   return {
     id: user.id, nome, email: user.email, avatar_url: null, plano: "trial",
     trial_ends_at: new Date(Date.now() + 7 * 864e5).toISOString(),
-    created_at: new Date().toISOString(), nome_pousada: "", slug: slugify(nome) + "-" + user.id.slice(0, 6),
+    created_at: new Date().toISOString(), nome_pousada: "", slug: slugify(nome).slice(0, 32).replace(/-$/, "") + "-" + user.id.slice(0, 6),
     whatsapp: "", cor: "#0891b2", logo_url: "", chave_pix: "", link_pagamento: "", infinitepay_handle: "", onboarding_concluido: false,
     regras_casa: "Check-in a partir das 14h. Check-out até às 11h. Proibido fumar nos quartos. Animais de estimação mediante acordo prévio.",
   }
@@ -147,6 +147,9 @@ export async function saveProfile(p: Profile) {
     return p
   }
   const db = readAll()
+  if (db.profiles.some((x: Profile) => x.id !== p.id && x.slug === p.slug)) {
+    throw new Error("Este endereço público já está em uso por outra pousada.")
+  }
   const i = db.profiles.findIndex((x: any) => x.id === p.id)
   if (i >= 0) db.profiles[i] = p; else db.profiles.push(p)
   writeAll(db)

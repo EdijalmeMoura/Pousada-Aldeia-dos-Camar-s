@@ -14,7 +14,7 @@ function publicRooms(PDO $db, string $slug): array {
     return $query->fetchAll(PDO::FETCH_ASSOC);
 }
 
-function validateBooking(array $input): array {
+function validateBooking(array $input, bool $manual = false): array {
     $slug = (string)($input['slug'] ?? '');
     $room = (string)($input['quarto_id'] ?? '');
     $start = (string)($input['check_in'] ?? '');
@@ -35,15 +35,15 @@ function validateBooking(array $input): array {
         || strlen($phone) < 8 || strlen($phone) > 32
         || $adults === false || $adults < 1 || $adults > 50
         || !in_array($payment, ['pix', 'cartao'], true)
-        || ($input['aceito_privacidade'] ?? null) !== true) {
+        || (!$manual && ($input['aceito_privacidade'] ?? null) !== true)) {
         throw new InvalidArgumentException('Dados da reserva inválidos ou consentimento em falta.');
     }
     return compact('slug', 'room', 'start', 'end', 'name', 'email', 'phone', 'adults', 'payment');
 }
 
 /** Bloqueia a linha do quarto para serializar reservas concorrentes daquele quarto. */
-function createPublicBooking(PDO $db, array $input): array {
-    $data = validateBooking($input);
+function createPublicBooking(PDO $db, array $input, bool $manual = false): array {
+    $data = validateBooking($input, $manual);
     $db->beginTransaction();
     try {
         $room = $db->prepare('SELECT HEX(q.pousada_id) AS pousada_id, q.capacidade, q.preco_base_centavos FROM quartos q JOIN pousadas p ON p.id = q.pousada_id WHERE q.id = UNHEX(?) AND p.slug = ? AND q.ativo = 1 FOR UPDATE');
@@ -63,8 +63,8 @@ function createPublicBooking(PDO $db, array $input): array {
         $total = $nights * (int)$details['preco_base_centavos'];
         if ($total <= 0 || $total > 2147483647) throw new DomainException('Preço inválido.');
         $code = 'HSP-' . strtoupper(bin2hex(random_bytes(6)));
-        $insert = $db->prepare('INSERT INTO reservas (id, pousada_id, quarto_id, nome_hospede, email, telefone, check_in, check_out, adultos, estado, valor_total_centavos, consentimento_em, codigo_reserva, metodo_pagamento) VALUES (UNHEX(?), UNHEX(?), UNHEX(?), ?, ?, ?, ?, ?, ?, \'pendente\', ?, CURRENT_TIMESTAMP, ?, ?)');
-        $insert->execute([bin2hex(random_bytes(16)), $details['pousada_id'], $data['room'], $data['name'], $data['email'], $data['phone'], $data['start'], $data['end'], $data['adults'], $total, $code, $data['payment']]);
+        $insert = $db->prepare('INSERT INTO reservas (id, pousada_id, quarto_id, nome_hospede, email, telefone, check_in, check_out, adultos, estado, valor_total_centavos, consentimento_em, codigo_reserva, metodo_pagamento) VALUES (UNHEX(?), UNHEX(?), UNHEX(?), ?, ?, ?, ?, ?, ?, \'pendente\', ?, ?, ?, ?)');
+        $insert->execute([bin2hex(random_bytes(16)), $details['pousada_id'], $data['room'], $data['name'], $data['email'], $data['phone'], $data['start'], $data['end'], $data['adults'], $total, $manual ? null : date('Y-m-d H:i:s'), $code, $data['payment']]);
         $db->commit();
         return ['codigo_reserva' => $code, 'valor_total' => $total / 100];
     } catch (Throwable $error) {

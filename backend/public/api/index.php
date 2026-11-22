@@ -8,8 +8,8 @@ header('X-Content-Type-Options: nosniff');
 // Sem rota genérica de escrita. Publicação só depois de testar em MySQL real.
 $action = (string)($_GET['action'] ?? '');
 $method = $_SERVER['REQUEST_METHOD'];
-if (!in_array($action, ['health', 'pousada', 'quartos', 'reservar', 'session', 'register', 'login', 'logout'], true)
-    || (in_array($action, ['reservar', 'register', 'login', 'logout'], true) ? $method !== 'POST' : $method !== 'GET')) {
+if (!in_array($action, ['health', 'pousada', 'quartos', 'reservar', 'session', 'register', 'login', 'logout', 'my-rooms', 'my-bookings', 'add-room', 'add-booking'], true)
+    || (in_array($action, ['reservar', 'register', 'login', 'logout', 'add-room', 'add-booking'], true) ? $method !== 'POST' : $method !== 'GET')) {
     http_response_code(404);
     echo json_encode(['error' => 'Rota não disponível']);
     exit;
@@ -41,6 +41,11 @@ try {
         echo json_encode(authAction($pdo, $action, $config), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
         exit;
     }
+    if (in_array($action, ['my-rooms', 'my-bookings', 'add-room', 'add-booking'], true)) {
+        require __DIR__ . '/operations.php';
+        echo json_encode(operation($pdo, $action, $config), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+        exit;
+    }
     require __DIR__ . '/booking.php';
     $slug = (string)($_GET['slug'] ?? '');
     if ($action !== 'reservar' && (!preg_match('/^[a-z0-9]+(?:-[a-z0-9]+)*$/D', $slug) || strlen($slug) > 80)) {
@@ -56,6 +61,9 @@ try {
         $result = createPublicBooking($pdo, $input);
     }
     echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+} catch (RuntimeException $error) {
+    http_response_code($error->getCode() === 401 ? 401 : 503);
+    echo json_encode(['error' => $error->getCode() === 401 ? 'Autenticação necessária.' : 'Serviço indisponível.']);
 } catch (InvalidArgumentException | DomainException | JsonException $error) {
     http_response_code($error instanceof DomainException ? 409 : 400);
     echo json_encode(['error' => $error->getMessage()], JSON_UNESCAPED_UNICODE);

@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { supabase, isSupabaseConfigured } from "@/lib/supabase"
 import { getProfile, newProfile, saveProfile, type Profile } from "@/lib/db"
 import { isPhpBackend } from "@/lib/phpBackend"
+import { phpSession, phpWrite, clearPhpSession, type PhpAccount } from "@/lib/phpAuth"
 import { hashDemoPassword, verifyDemoPassword, type DemoAccount } from "@/lib/demoCredentials"
 
 interface User { id: string; email: string; nome?: string }
@@ -21,6 +22,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const setPhpAccount = (account: PhpAccount | null) => {
+    if (!account) { setUser(null); setProfile(null); return }
+    setUser({ id: account.id, email: account.email, nome: account.nome_pousada })
+    setProfile({ ...newProfile({ id: account.id, email: account.email, nome: account.nome_pousada }),
+      nome_pousada: account.nome_pousada, slug: account.slug, onboarding_concluido: true })
+  }
+
   const loadProfile = async (u: User) => {
     let p = await getProfile(u.id)
     if (!p) { p = newProfile(u); await saveProfile(p) }
@@ -30,8 +38,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     ;(async () => {
       if (isPhpBackend) {
-        // Autenticação PHP só será ativada quando as operações internas estiverem integradas.
-        setUser(null); setProfile(null)
+        try { setPhpAccount(await phpSession()) }
+        catch { setPhpAccount(null) }
       } else if (isSupabaseConfigured && supabase) {
         const { data } = await supabase.auth.getSession()
         const u = data.session?.user
@@ -50,7 +58,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signUp = async (email: string, password: string, nome: string) => {
-    if (isPhpBackend) throw new Error("A área interna ainda não está disponível neste modo.")
+    if (isPhpBackend) {
+      const result = await phpWrite<{ account: PhpAccount }>("register", { email, password, nome_pousada: nome })
+      setPhpAccount(result.account)
+      return true
+    }
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { nome } } })
       if (error) throw error
@@ -68,7 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signIn = async (email: string, password: string) => {
-    if (isPhpBackend) throw new Error("A área interna ainda não está disponível neste modo.")
+    if (isPhpBackend) {
+      const result = await phpWrite<{ account: PhpAccount }>("login", { email, password })
+      setPhpAccount(result.account)
+      return
+    }
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
@@ -100,12 +116,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    if (isPhpBackend) {
+      await phpWrite("logout", {})
+      clearPhpSession()
+      setPhpAccount(null)
+      return
+    }
     if (isSupabaseConfigured && supabase) await supabase.auth.signOut()
     localStorage.removeItem(LS_USER)
     setUser(null); setProfile(null)
   }
 
-  const refreshProfile = async () => { if (user) await loadProfile(user) }
+  const refreshProfile = async () => { if (isPhpBackend) { setPhpAccount(await phpSession()); return }; if (user) await loadProfile(user) }
 
   return <Ctx.Provider value={{ user, profile, loading, signUp, signIn, signInGoogle, signOut, refreshProfile }}>{children}</Ctx.Provider>
 }

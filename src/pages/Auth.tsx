@@ -6,6 +6,7 @@ import { loginSchema, signupSchema, type LoginForm, type SignupForm } from "@/li
 import { toast } from "sonner"
 import { Chrome, Loader2, MessageSquareText, Star, Wallet } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { isPhpBackend } from "@/lib/phpBackend"
 import { isSupabaseConfigured } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -39,7 +40,7 @@ function AuthShell({ titulo, subtitulo, children }: { titulo: string; subtitulo:
             <CardTitle className="text-2xl">{titulo}</CardTitle>
             <CardDescription>{subtitulo}</CardDescription>
           </CardHeader>
-          <CardContent>{!isSupabaseConfigured && <p role="status" className="mb-4 rounded-xl bg-accent p-3 text-sm">Modo de demonstração: a conta e os dados ficam apenas neste navegador. Não reutilize uma palavra-passe pessoal nem introduza dados reais de hóspedes.</p>}{children}</CardContent>
+          <CardContent>{!isSupabaseConfigured && !isPhpBackend && <p role="status" className="mb-4 rounded-xl bg-accent p-3 text-sm">Modo de demonstração: a conta e os dados ficam apenas neste navegador. Não reutilize uma palavra-passe pessoal nem introduza dados reais de hóspedes.</p>}{children}</CardContent>
         </Card>
       </div>
     </div>
@@ -57,7 +58,7 @@ export function Login() {
     catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível entrar. Tente novamente.") }
   }
   const google = async () => {
-    try { await signInGoogle(); if (!isSupabaseConfigured) { toast.info("Conta de demonstração iniciada, sem Google real."); navigate("/onboarding") } }
+    try { await signInGoogle(); if (!isSupabaseConfigured && !isPhpBackend) { toast.info("Conta de demonstração iniciada, sem Google real."); navigate("/onboarding") } }
     catch { toast.error("Não foi possível entrar com o Google.") }
   }
 
@@ -67,7 +68,7 @@ export function Login() {
         <div className="space-y-2"><Label htmlFor="email">E-mail</Label><Input id="email" type="email" {...register("email")} placeholder="voce@pousada.pt" />{errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}</div>
         <div className="space-y-2"><Label htmlFor="password">Palavra-passe</Label><Input id="password" type="password" {...register("password")} placeholder="••••••••" />{errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}</div>
         <Button type="submit" className="w-full" disabled={isSubmitting}>{isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />} Entrar</Button>
-        <Button type="button" variant="outline" className="w-full" onClick={google}><Chrome className="h-4 w-4" /> {isSupabaseConfigured ? "Continuar com Google" : "Explorar conta de demonstração"}</Button>
+        {!isPhpBackend && <Button type="button" variant="outline" className="w-full" onClick={google}><Chrome className="h-4 w-4" /> {isSupabaseConfigured ? "Continuar com Google" : "Explorar conta de demonstração"}</Button>}
         <p className="text-center text-sm text-muted-foreground">Ainda não tem conta? <Link to="/signup" className="font-medium text-primary hover:underline">Criar conta grátis</Link></p>
       </form>
     </AuthShell>
@@ -81,22 +82,22 @@ export function Signup() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignupForm>({ resolver: zodResolver(signupSchema) })
 
   const onSubmit = async (data: SignupForm) => {
-    try { const active = await signUp(data.email, data.password, data.nome); if (!active) { toast.info("Verifique o e-mail para confirmar a conta e depois faça login."); return } toast.success("Conta criada! Vamos configurar a sua pousada."); navigate("/onboarding") }
+    try { if (isPhpBackend && data.password.length < 12) throw new Error("A palavra-passe deve ter pelo menos 12 caracteres."); const active = await signUp(data.email, data.password, data.nome); if (!active) { toast.info("Verifique o e-mail para confirmar a conta e depois faça login."); return } toast.success(isPhpBackend ? "Conta criada. Painel PHP em ensaio." : "Conta criada! Vamos configurar a sua pousada."); navigate(isPhpBackend ? "/app" : "/onboarding") }
     catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível criar a conta.") }
   }
   const google = async () => {
-    try { await signInGoogle(); if (!isSupabaseConfigured) { toast.info("Conta de demonstração iniciada, sem Google real."); navigate("/onboarding") } }
+    try { await signInGoogle(); if (!isSupabaseConfigured && !isPhpBackend) { toast.info("Conta de demonstração iniciada, sem Google real."); navigate("/onboarding") } }
     catch { toast.error("Não foi possível continuar com o Google.") }
   }
 
   return (
-    <AuthShell titulo="Crie a sua conta" subtitulo={isSupabaseConfigured ? "Teste de 7 dias · Sem cartão" : "Demonstração local · Sem cartão"}>
+    <AuthShell titulo="Crie a sua conta" subtitulo={isPhpBackend ? "Conta PHP em ensaio · Sem pagamentos" : isSupabaseConfigured ? "Teste de 7 dias · Sem cartão" : "Demonstração local · Sem cartão"}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <div className="space-y-2"><Label htmlFor="nome">Nome</Label><Input id="nome" {...register("nome")} placeholder="O seu nome" />{errors.nome && <p className="text-sm text-destructive">{errors.nome.message}</p>}</div>
         <div className="space-y-2"><Label htmlFor="email">E-mail</Label><Input id="email" type="email" {...register("email")} placeholder="voce@pousada.pt" />{errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}</div>
-        <div className="space-y-2"><Label htmlFor="password">Palavra-passe</Label><Input id="password" type="password" {...register("password")} placeholder="Mínimo 6 caracteres" />{errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}</div>
+        <div className="space-y-2"><Label htmlFor="password">Palavra-passe</Label><Input id="password" type="password" {...register("password")} placeholder={isPhpBackend ? "Mínimo 12 caracteres" : "Mínimo 6 caracteres"} />{errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}</div>
         <Button type="submit" className="w-full" disabled={isSubmitting}>{isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />} Criar conta grátis</Button>
-        <Button type="button" variant="outline" className="w-full" onClick={google}><Chrome className="h-4 w-4" /> {isSupabaseConfigured ? "Continuar com Google" : "Explorar conta de demonstração"}</Button>
+        {!isPhpBackend && <Button type="button" variant="outline" className="w-full" onClick={google}><Chrome className="h-4 w-4" /> {isSupabaseConfigured ? "Continuar com Google" : "Explorar conta de demonstração"}</Button>}
         <p className="text-center text-sm text-muted-foreground">Já tem conta? <Link to="/login" className="font-medium text-primary hover:underline">Entrar</Link></p>
       </form>
     </AuthShell>

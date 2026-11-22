@@ -1,13 +1,15 @@
 import { lazy, Suspense } from "react"
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { AuthProvider } from "@/hooks/useAuth"
 import { AppLayout } from "@/components/AppLayout"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { ErrorBoundary } from "@/components/ErrorBoundary"
 import { Toaster } from "@/components/Toaster"
+import { isPhpBackend } from "@/lib/phpBackend"
 import { Skeleton } from "@/components/ui/skeleton"
 
+const PhpConsole = lazy(() => import("@/pages/PhpConsole"))
 const Landing = lazy(() => import("@/pages/Landing"))
 const Login = lazy(() => import("@/pages/Auth").then((m) => ({ default: m.Login })))
 const Signup = lazy(() => import("@/pages/Auth").then((m) => ({ default: m.Signup })))
@@ -44,19 +46,25 @@ export default function App() {
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/privacidade" element={<Privacidade />} />
                 <Route path="/termos" element={<Termos />} />
-                <Route path="/onboarding" element={<ProtectedRoute onboarding><Onboarding /></ProtectedRoute>} />
-                <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="quartos" element={<Quartos />} />
-                  <Route path="reservas" element={<Reservas />} />
-                  <Route path="reservas/:id/confirmacao" element={<Confirmacao />} />
-                  <Route path="calendario" element={<Calendario />} />
-                  <Route path="relatorios" element={<Relatorios />} />
-                  <Route path="checkin" element={<Checkin />} />
-                </Route>
-                <Route path="/configuracoes" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-                  <Route index element={<Configuracoes />} />
-                </Route>
+                <Route path="/onboarding" element={isPhpBackend ? <Navigate to="/app" replace /> : <ProtectedRoute onboarding><Onboarding /></ProtectedRoute>} />
+                {isPhpBackend ? <>
+                  <Route path="/app" element={<ProtectedRoute><PhpConsole /></ProtectedRoute>} />
+                  <Route path="/app/*" element={<Navigate to="/app" replace />} />
+                  <Route path="/configuracoes" element={<Navigate to="/app" replace />} />
+                </> : <>
+                  <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="quartos" element={<Quartos />} />
+                    <Route path="reservas" element={<Reservas />} />
+                    <Route path="reservas/:id/confirmacao" element={<Confirmacao />} />
+                    <Route path="calendario" element={<Calendario />} />
+                    <Route path="relatorios" element={<Relatorios />} />
+                    <Route path="checkin" element={<Checkin />} />
+                  </Route>
+                  <Route path="/configuracoes" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                    <Route index element={<Configuracoes />} />
+                  </Route>
+                </>}
                 <Route path="/:slug" element={<PublicBooking />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

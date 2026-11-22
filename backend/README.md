@@ -21,3 +21,7 @@ Aplique `sql/002_booking_code.sql` e `sql/003_auth_rate_limit.sql` após 001. O 
 ## Integração pública do frontend (fase experimental)
 
 `VITE_BACKEND=php` no build faz a página pública usar o endpoint PHP **na mesma subpasta do site**; não envia pedidos a localhost nem guarda reservas em `localStorage`. Os quartos são apresentados sem descrição/fotografia até existir esse suporte no esquema MySQL. Com esta opção, a área interna fica intencionalmente indisponível: as contas PHP e as operações internas ainda não estão ligadas à interface. `npm run package:hostinger` continua a exigir Supabase; não há pacote de produção PHP nesta fase. Não use o ZIP de demonstração antigo nem publique uma versão com dados reais enquanto não houver fluxo interno e testes de ponta a ponta no alojamento.
+
+## Painel PHP reduzido no frontend
+
+No modo de build `VITE_BACKEND=php`, login, registo, consulta de sessão e saída usam a sessão PHP; o token CSRF é mantido apenas em memória. `/app` mostra só criação/listagem de quartos e reservas manuais/listagem; links de funcionalidades antigas não são exibidos. O nome introduzido no registo é o **nome da pousada**. A conta PHP ainda não tem confirmação de e-mail, recuperação de palavra-passe ou alterações/cancelamento de reservas. O pacote de produção PHP permanece indisponível até estas lacunas e o teste em MySQL real serem resolvidos.

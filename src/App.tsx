@@ -14,6 +14,7 @@ const Signup = lazy(() => import("@/pages/Auth").then((m) => ({ default: m.Signu
 const Onboarding = lazy(() => import("@/pages/Onboarding"))
 const Dashboard = lazy(() => import("@/pages/Dashboard"))
 const Quartos = lazy(() => import("@/pages/Quartos"))
+const Relatorios = lazy(() => import("@/pages/Relatorios"))
 const Calendario = lazy(() => import("@/pages/Calendario"))
 const Confirmacao = lazy(() => import("@/pages/Confirmacao"))
 const Reservas = lazy(() => import("@/pages/Reservas"))
@@ -50,6 +51,7 @@ export default function App() {
                   <Route path="reservas" element={<Reservas />} />
                   <Route path="reservas/:id/confirmacao" element={<Confirmacao />} />
                   <Route path="calendario" element={<Calendario />} />
+                  <Route path="relatorios" element={<Relatorios />} />
                   <Route path="checkin" element={<Checkin />} />
                 </Route>
                 <Route path="/configuracoes" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>

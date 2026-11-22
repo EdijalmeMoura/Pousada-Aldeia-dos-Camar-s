@@ -30,24 +30,27 @@ export default function Dashboard() {
   const quartosQ = useQuery({ queryKey: ["quartos", uid], queryFn: () => dbList("quartos", uid) })
 
   const reservas = reservasQ.data ?? []
-  const hoje = reservas.filter((r) => isToday(parseISO(r.check_in)))
-  const receitaMes = reservas.filter((r) => r.estado !== "cancelada" && parseISO(r.created_at).getMonth() === new Date().getMonth()).reduce((s, r) => s + r.valor_total, 0)
+  const hoje = reservas.filter((r) => r.estado !== "cancelada" && isToday(parseISO(r.check_in)))
+  const mesAtual = format(new Date(), "yyyy-MM")
+  const receitaMes = reservas.filter((r) => r.estado !== "cancelada" && r.pagamento_estado === "pago" && r.check_in.startsWith(mesAtual)).reduce((s, r) => s + Number(r.valor_total), 0)
   const diretas = reservas.filter((r) => r.origem === "direta" && r.estado !== "cancelada").length
   const pendentes = reservas.filter((r) => r.estado === "pendente").length
   const quartosAtivos = (quartosQ.data ?? []).filter((q: any) => q.ativo).length
-  const ocupacao = quartosAtivos > 0 ? Math.min(100, Math.round((hoje.length / quartosAtivos) * 100)) : 0
+  const diaAtual = format(new Date(), "yyyy-MM-dd")
+  const ocupadosHoje = reservas.filter(r => ["confirmada", "concluida"].includes(r.estado) && r.check_in <= diaAtual && diaAtual < r.check_out).length
+  const ocupacao = quartosAtivos > 0 ? Math.min(100, Math.round((ocupadosHoje / quartosAtivos) * 100)) : 0
 
   // Receita dos últimos 7 dias (barras)
   const ultimos7 = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (6 - i))
-    const valor = reservas.filter((r) => r.estado !== "cancelada" && parseISO(r.created_at).toDateString() === d.toDateString()).reduce((s, r) => s + r.valor_total, 0)
+    const valor = reservas.filter((r) => r.estado !== "cancelada" && r.pagamento_estado === "pago" && r.check_in === format(d, "yyyy-MM-dd")).reduce((s, r) => s + Number(r.valor_total), 0)
     return { label: format(d, "EEE", { locale: ptPT }), valor }
   })
   const max7 = Math.max(1, ...ultimos7.map((x) => x.valor))
 
   const kpis = [
     { icon: CalendarCheck, label: "Check-ins hoje", valor: String(hoje.length), sub: `${pendentes} pendente(s)` },
-    { icon: Wallet, label: "Receita do mês", valor: brl(receitaMes), sub: `${reservas.length} reservas no total` },
+    { icon: Wallet, label: "Pagamentos verificados", valor: brl(receitaMes), sub: "reservas com entrada neste mês" },
     { icon: BedDouble, label: "Quartos ativos", valor: String(quartosAtivos), sub: "prontos para reserva direta" },
     { icon: MessageSquareText, label: "Reservas diretas", valor: String(diretas), sub: "sem comissão de plataforma" },
   ]
@@ -78,7 +81,7 @@ export default function Dashboard() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between"><CardTitle>Receita — últimos 7 dias</CardTitle><Badge variant="secondary">{brl(ultimos7.reduce((s, x) => s + x.valor, 0))}</Badge></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between"><CardTitle>Pagamentos verificados — entradas nos últimos 7 dias</CardTitle><Badge variant="secondary">{brl(ultimos7.reduce((s, x) => s + x.valor, 0))}</Badge></CardHeader>
           <CardContent>
             {reservasQ.isLoading ? <Skeleton className="h-40" /> : (
               <div className="flex h-40 items-end gap-2 md:gap-3" role="img" aria-label="Gráfico de receita dos últimos 7 dias">

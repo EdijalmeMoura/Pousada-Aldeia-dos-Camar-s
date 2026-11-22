@@ -92,3 +92,7 @@ Na página **Reservas**, o proprietário pode descarregar CSV filtrado por data 
 ## Confirmação de estadia (envio manual)
 
 Quando a pousada define uma reserva como confirmada, a página **Reservas** disponibiliza uma confirmação em `/app/reservas/:id/confirmacao`. Pode imprimi-la ou preparar uma mensagem por e-mail/WhatsApp para o hóspede. O documento só existe para reservas confirmadas ou concluídas, indica separadamente se o pagamento foi verificado e **não é recibo fiscal nem comprovativo do prestador**. Não existe envio automático: o operador revê e envia a mensagem na aplicação escolhida. A rota exige sessão do proprietário e a consulta respeita RLS no Supabase.
+
+## Relatórios operacionais
+
+Em `/app/relatorios`, o proprietário consulta reservas com entrada no mês, origem, cancelamentos, noites disponíveis (descontando bloqueios), noites ocupadas por estadias confirmadas/concluídas e pagamentos verificados. **Valor reservado não equivale a dinheiro recebido**: apenas reservas com `pagamento_estado = pago` entram no indicador de pagamentos verificados. O painel principal foi alinhado com essa distinção. Noites ocupadas contam no mês em que ocorrem, ainda que a entrada tenha sido no mês anterior; valores são atribuídos ao mês de entrada, não necessariamente à data de recebimento. Reembolsos e conciliação contabilística não são automatizados.

@@ -1,6 +1,6 @@
 import { BrandMark } from "@/components/BrandMark"
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom"
-import { BedDouble, CalendarCheck, CalendarDays, LayoutDashboard, LogOut, Menu, MessageSquareText, Settings, X } from "lucide-react"
+import { BedDouble, CalendarCheck, CalendarDays, BarChart3, LayoutDashboard, LogOut, Menu, MessageSquareText, Settings, X } from "lucide-react"
 import { useState } from "react"
 import { useAuth } from "@/hooks/useAuth"
 import { Button } from "./ui/button"
@@ -13,6 +13,7 @@ const links = [
   { to: "/app/quartos", label: "Quartos e tarifas", icon: BedDouble },
   { to: "/app/reservas", label: "Reservas", icon: CalendarCheck },
   { to: "/app/calendario", label: "Calendário", icon: CalendarDays },
+  { to: "/app/relatorios", label: "Relatórios", icon: BarChart3 },
   { to: "/app/checkin", label: "Check-in IA", icon: MessageSquareText },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ]

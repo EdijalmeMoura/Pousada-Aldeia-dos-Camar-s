@@ -18,8 +18,8 @@ export function filterReservations(rows: Reserva[], filter: ExportFilter): Reser
 }
 
 export function reservationCsv(rows: Reserva[]): string {
-  const fields: (keyof Reserva)[] = ["codigo_reserva", "nome_hospede", "email", "telefone", "check_in", "check_out", "adultos", "estado", "metodo_pagamento", "valor_total", "origem", "pagamento_estado"]
-  const labels = ["Código", "Hóspede", "E-mail", "Telefone", "Entrada", "Saída", "Adultos", "Estado", "Método", "Valor (BRL)", "Origem", "Pagamento"]
+  const fields: (keyof Reserva)[] = ["codigo_reserva", "nome_hospede", "email", "telefone", "check_in", "check_out", "adultos", "estado", "metodo_pagamento", "valor_total", "origem", "pagamento_estado", "motivo_cancelamento", "reembolso_estado", "reembolso_referencia"]
+  const labels = ["Código", "Hóspede", "E-mail", "Telefone", "Entrada", "Saída", "Adultos", "Estado", "Método", "Valor (BRL)", "Origem", "Pagamento", "Motivo do cancelamento", "Reembolso", "Referência do reembolso"]
   return "\uFEFF" + [labels.map(csvCell).join(";"), ...rows.map(r => fields.map(f => csvCell(r[f])).join(";"))].join("\r\n") + "\r\n"
 }
 

@@ -24,6 +24,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/EmptyState"
 import { ReservationExport } from "@/components/ReservationExport"
+import { ReservationCancellation } from "@/components/ReservationCancellation"
 
 const schema = z.object({
   quarto_id: z.string().min(1, "Escolha o quarto"),
@@ -164,14 +165,15 @@ export default function Reservas() {
                         <TableCell className="whitespace-nowrap">{format(parseISO(r.check_in), "d MMM", { locale: ptPT })} → {format(parseISO(r.check_out), "d MMM", { locale: ptPT })}</TableCell>
                         <TableCell><Badge variant={r.origem === "direta" ? "default" : "outline"}>{r.origem === "direta" ? "Direta" : "Plataforma"}</Badge></TableCell>
                         <TableCell>
-                          <select aria-label="Estado da reserva" value={r.estado} onChange={(e) => setEstado.mutate({ id: r.id, estado: e.target.value as Reserva["estado"] })} className="rounded-xl border border-input bg-background px-2 py-1 text-sm">
-                            {(Object.keys(estadoLabel) as Reserva["estado"][]).map((s) => <option key={s} value={s}>{estadoLabel[s]}</option>)}
+                          <select aria-label="Estado da reserva" value={r.estado} disabled={r.estado === "cancelada" || r.estado === "concluida" || setEstado.isPending} onChange={(e) => setEstado.mutate({ id: r.id, estado: e.target.value as Reserva["estado"] })} className="rounded-xl border border-input bg-background px-2 py-1 text-sm">
+                            {(Object.keys(estadoLabel) as Reserva["estado"][]).filter(s => s !== "cancelada" || r.estado === "cancelada").map((s) => <option key={s} value={s}>{estadoLabel[s]}</option>)}
                           </select>
                         </TableCell>
-                        <TableCell><Badge variant={r.pagamento_estado === "pago" ? "default" : "outline"}>{r.pagamento_estado === "pago" ? "Pago (verificado)" : r.pagamento_estado === "aguarda_pagamento" ? "A aguardar" : "Não pago"}</Badge></TableCell>
+                        <TableCell><Badge variant={r.pagamento_estado === "pago" ? "default" : "outline"}>{r.pagamento_estado === "pago" ? "Pago (verificado)" : r.pagamento_estado === "aguarda_pagamento" ? "A aguardar" : "Não pago"}</Badge>{r.reembolso_estado === "requer_analise" && <span className="mt-1 block text-xs text-destructive">Reembolso por analisar</span>}{r.reembolso_estado === "registado_manual" && <span className="mt-1 block text-xs text-muted-foreground">Reembolso registado manualmente</span>}{r.estado === "cancelada" && r.motivo_cancelamento && <span className="mt-1 block max-w-48 truncate text-xs text-muted-foreground" title={r.motivo_cancelamento}>Motivo: {r.motivo_cancelamento}</span>}</TableCell>
                         <TableCell className="text-right font-medium">{brl(r.valor_total)}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
+                            <ReservationCancellation reservation={r} ownerId={user!.id} onChanged={() => qc.invalidateQueries({ queryKey: ["reservas"] })} />
                             {["confirmada", "concluida"].includes(r.estado) && <Button variant="ghost" size="icon" aria-label="Ver confirmação de estadia" title="Ver confirmação de estadia" asChild><Link to={`/app/reservas/${r.id}/confirmacao`}><FileText className="h-4 w-4 text-primary" /></Link></Button>}
                             {profile?.infinitepay_handle && r.pagamento_estado !== "pago" && <Button variant="ghost" size="icon" aria-label="Copiar link InfinitePay" disabled={checkout.isPending} onClick={() => checkout.mutate(r.id)}><CreditCard className="h-4 w-4 text-primary" /></Button>}
                             <Button variant="ghost" size="icon" aria-label="Enviar dados de pagamento ao hóspede por WhatsApp" asChild>

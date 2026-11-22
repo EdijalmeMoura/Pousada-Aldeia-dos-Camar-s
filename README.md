@@ -108,3 +108,7 @@ A landing não apresenta depoimentos, avaliações ou métricas de clientes que 
 ## Pré-publicação na Hostinger
 
 Consulte [docs/DEPLOY-HOSTINGER.md](docs/DEPLOY-HOSTINGER.md) para a sequência Supabase → build → Hostinger → testes. Use `npm run build:production` para impedir que um build sem URL e chave **pública** de Supabase seja publicado como se fosse uma aplicação operacional. O build de demonstração (`npm run build`) continua disponível sem Supabase. O pré-voo é testado com `npm run test:deploy` e executado no CI; não substitui testes de migrações, RLS e pagamento numa instância real. Ficheiros `.env.*` locais são ignorados pelo Git, exceto `.env.example`.
+
+## Diagnóstico de segurança no Supabase
+
+Depois de aplicar as migrações `001`–`009`, execute `supabase/tests/production_checks.sql` no SQL Editor. O script verifica RLS, permissões `anon`, funções RPC e restrições/triggers essenciais sem alterar dados. Não foi executado neste repositório: é necessário um projeto Supabase real. O resultado não substitui ensaios de isolamento com duas contas e um hóspede anónimo.

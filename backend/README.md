@@ -121,3 +121,7 @@ A CI instala PHP CLI e `mbstring`, executa `php -l` nos ficheiros PHP públicos 
 ## MySQL efémero na CI
 
 A CI inicia um serviço MySQL 8.0 **descartável**, com credenciais exclusivamente de teste definidas no próprio workflow, aplica as migrações 001–007, corre o diagnóstico e `backend/tests/integration.php` com duas pousadas. A configuração temporária fica fora de `public_html` e é removida no fim do passo. Não há ligação a nenhuma base da Hostinger nem reutilização destas credenciais no produto. A execução da CI do commit `8487441` [terminou com sucesso](https://github.com/EdijalmeMoura/Pousada-Aldeia-dos-Camar-s/actions/runs/45071697307). Este ensaio não exercita HTTP/cookies, múltiplos trabalhadores PHP, MariaDB da Hostinger ou pagamentos; as etapas no domínio de ensaio continuam obrigatórias.
+
+## Concorrência na CI
+
+`backend/tests/concurrency.php` usa a mesma base descartável da CI e dois processos PHP, um a criar uma reserva pública e outro uma reserva manual para o mesmo quarto e datas. O processo principal segura inicialmente o bloqueio InnoDB do quarto até ambos estarem à espera; verifica depois que existe exactamente uma reserva, com um sucesso e um conflito. A permissão MySQL `PROCESS` é atribuída apenas ao utilizador efémero da CI para observar as transações em espera. Não execute este ensaio na base de produção. Este teste não substitui pedidos HTTP reais, nem demonstra o comportamento do MariaDB/Apache na Hostinger.

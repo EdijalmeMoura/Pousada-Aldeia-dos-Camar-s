@@ -62,8 +62,14 @@ jobs:
               'mysql_time_offset' => '-03:00',
           ];
           PHP
-          php backend/tests/diagnostic.php
-          php backend/tests/integration.php
+          php backend/tests/diagnostic.php 2>&1 | tee /tmp/hospedae-diagnostic.log || {
+            echo "::error title=Diagnóstico MySQL::$(grep 'FALHA:' /tmp/hospedae-diagnostic.log | tr '\n' ' ' | cut -c1-500)"
+            exit 1
+          }
+          php backend/tests/integration.php 2>&1 | tee /tmp/hospedae-integration.log || {
+            echo "::error title=Ensaio PHP MySQL::$(tail -n 5 /tmp/hospedae-integration.log | tr '\n' ' ' | cut -c1-500)"
+            exit 1
+          }
       - run: npm run test:php:http:guard
       - run: python3 -m unittest discover -s scripts -p "test_package*.py"
       - run: npm run build

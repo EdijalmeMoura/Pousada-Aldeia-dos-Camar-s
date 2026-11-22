@@ -117,3 +117,7 @@ O PHP deste repositório **não tem modo de produção**. Antes de ligar ao MySQ
 ## Execução PHP real na CI (sem MySQL)
 
 A CI instala PHP CLI e `mbstring`, executa `php -l` nos ficheiros PHP públicos e de teste e corre `backend/tests/staging_guard.php` e `backend/tests/validation.php`. Estes testes exercitam em PHP a proteção do domínio de ensaio, datas, formato da reserva e consentimento, **sem acesso à base**. Não cobrem SQL, PHP-FPM/Apache, sessões HTTP, concorrência, pagamentos ou a Hostinger. O resultado da execução remota da CI deve ser confirmado no GitHub; análise sintática local por JavaScript continua a ser apenas análise estática.
+
+## MySQL efémero na CI
+
+A CI inicia um serviço MySQL 8.0 **descartável**, com credenciais exclusivamente de teste definidas no próprio workflow, aplica as migrações 001–007, corre o diagnóstico e `backend/tests/integration.php` com duas pousadas. A configuração temporária fica fora de `public_html` e é removida no fim do passo. Não há ligação a nenhuma base da Hostinger nem reutilização destas credenciais no produto. Confirme a conclusão da execução no GitHub antes de considerar os ensaios validados. Este ensaio não exercita HTTP/cookies, múltiplos trabalhadores PHP, MariaDB da Hostinger ou pagamentos; as etapas no domínio de ensaio continuam obrigatórias.

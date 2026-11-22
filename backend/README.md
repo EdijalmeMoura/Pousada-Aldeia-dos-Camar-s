@@ -105,3 +105,7 @@ Aplique `sql/007_manual_payment.sql` após 001–006. `GET ?action=my-payment-se
 ## Mensagens de cobrança manual e isolamento de sessão
 
 Após guardar os dados PIX/link privados, a lista de reservas permite preparar instruções por e-mail ou WhatsApp apenas para reservas pendentes ou confirmadas. O operador revê e envia manualmente; nenhum botão cria checkout, cobra dinheiro ou altera o estado do pagamento. O texto usa os dados da **pousada autenticada**, não os de outras contas. Ao entrar, criar outra conta, sair ou receber HTTP 401, o frontend apaga a cache de consultas (incluindo reservas e dados de cobrança) para evitar mostrar dados antigos de outra pousada no mesmo navegador. O ensaio PHP/MySQL remoto ainda é obrigatório antes de usar dados reais.
+
+## Comunicação honesta no modo PHP
+
+A página inicial e o ecrã de acesso do build `VITE_BACKEND=php` mostram apenas capacidades do painel reduzido e identificam a instalação como ensaio. A página de privacidade e os termos deixam de afirmar que o PHP usa RLS, que cobra subscrições ou que dispõe de check-in IA; os textos são **informação provisória**, não uma política/contrato aprovado para operação real. Antes de receber hóspedes reais, a entidade responsável deve rever finalidade, conservação, pedidos LGPD, contactos válidos, pagamentos e termos com apoio jurídico adequado. Nunca anuncie cobrança automática que não foi integrada e testada.

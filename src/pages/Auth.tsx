@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { loginSchema, signupSchema, type LoginForm, type SignupForm } from "@/lib/authValidation"
 import { toast } from "sonner"
-import { Chrome, Loader2, MessageSquareText, Star, Wallet } from "lucide-react"
+import { Chrome, Loader2, MessageSquareText, Star, Wallet, CalendarDays } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { isPhpBackend } from "@/lib/phpBackend"
 import { isSupabaseConfigured } from "@/lib/supabase"
@@ -24,11 +24,11 @@ function AuthShell({ titulo, subtitulo, children }: { titulo: string; subtitulo:
         <div className="relative flex h-full flex-col justify-between p-10 text-white">
           <span className="flex items-center gap-2 font-bold"><BrandMark /> Hospedaê</span>
           <div className="space-y-4">
-            <h2 className="max-w-md text-3xl font-bold leading-tight">A sua pousada a vender direto — sem comissão, sem fricção.</h2>
+            <h2 className="max-w-md text-3xl font-bold leading-tight">{isPhpBackend ? "Gestão de reservas PHP em ensaio" : "A sua pousada a vender direto — sem comissão, sem fricção."}</h2>
             <ul className="space-y-2 text-sm text-white/85">
               <li className="flex items-center gap-2"><Wallet className="h-4 w-4" /> Evite a comissão da plataforma nas reservas diretas</li>
-              <li className="flex items-center gap-2"><MessageSquareText className="h-4 w-4" /> Check-in assistido com regras da casa</li>
-              <li className="flex items-center gap-2"><Star className="h-4 w-4" /> Hóspedes fidelizados à sua marca</li>
+              {isPhpBackend ? <li className="flex items-center gap-2"><CalendarDays className="h-4 w-4" /> Quartos, bloqueios de datas e reservas</li> : <li className="flex items-center gap-2"><MessageSquareText className="h-4 w-4" /> Check-in assistido com regras da casa</li>}
+              {isPhpBackend ? <li className="flex items-center gap-2"><Star className="h-4 w-4" /> Sem cobrança automática; pagamentos a combinar manualmente</li> : <li className="flex items-center gap-2"><Star className="h-4 w-4" /> Hóspedes fidelizados à sua marca</li>}
             </ul>
           </div>
         </div>
@@ -40,7 +40,7 @@ function AuthShell({ titulo, subtitulo, children }: { titulo: string; subtitulo:
             <CardTitle className="text-2xl">{titulo}</CardTitle>
             <CardDescription>{subtitulo}</CardDescription>
           </CardHeader>
-          <CardContent>{!isSupabaseConfigured && !isPhpBackend && <p role="status" className="mb-4 rounded-xl bg-accent p-3 text-sm">Modo de demonstração: a conta e os dados ficam apenas neste navegador. Não reutilize uma palavra-passe pessoal nem introduza dados reais de hóspedes.</p>}{children}</CardContent>
+          <CardContent>{isPhpBackend && <p role="status" className="mb-4 rounded-xl bg-accent p-3 text-sm">Ambiente PHP em ensaio. Não introduza dados reais nem use este site para reservas reais antes dos testes na Hostinger.</p>}{!isSupabaseConfigured && !isPhpBackend && <p role="status" className="mb-4 rounded-xl bg-accent p-3 text-sm">Modo de demonstração: a conta e os dados ficam apenas neste navegador. Não reutilize uma palavra-passe pessoal nem introduza dados reais de hóspedes.</p>}{children}</CardContent>
         </Card>
       </div>
     </div>
@@ -96,7 +96,7 @@ export function Signup() {
         <div className="space-y-2"><Label htmlFor="nome">Nome</Label><Input id="nome" {...register("nome")} placeholder="O seu nome" />{errors.nome && <p className="text-sm text-destructive">{errors.nome.message}</p>}</div>
         <div className="space-y-2"><Label htmlFor="email">E-mail</Label><Input id="email" type="email" {...register("email")} placeholder="voce@pousada.pt" />{errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}</div>
         <div className="space-y-2"><Label htmlFor="password">Palavra-passe</Label><Input id="password" type="password" {...register("password")} placeholder={isPhpBackend ? "Mínimo 12 caracteres" : "Mínimo 6 caracteres"} />{errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}</div>
-        <Button type="submit" className="w-full" disabled={isSubmitting}>{isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />} Criar conta grátis</Button>
+        <Button type="submit" className="w-full" disabled={isSubmitting}>{isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />} {isPhpBackend ? "Criar conta de ensaio" : "Criar conta grátis"}</Button>
         {!isPhpBackend && <Button type="button" variant="outline" className="w-full" onClick={google}><Chrome className="h-4 w-4" /> {isSupabaseConfigured ? "Continuar com Google" : "Explorar conta de demonstração"}</Button>}
         <p className="text-center text-sm text-muted-foreground">Já tem conta? <Link to="/login" className="font-medium text-primary hover:underline">Entrar</Link></p>
       </form>

@@ -5,4 +5,6 @@ return [
     'database' => 'nome_da_base',
     'user' => 'utilizador_da_base',
     'password' => 'substituir_no_servidor',
+    'trusted_origin' => 'https://projetoredesnordeste.com.br',
+    'cookie_path' => '/edijalmemoura/hospedae/',
 ];

@@ -6,7 +6,7 @@
 
 No hPanel da Hostinger, configure um domínio de ensaio separado com SSL ativo e uma base MySQL **vazia**, com `test` como segmento do nome (por exemplo `conta_test_hospedae`). Crie um utilizador MySQL limitado à base de ensaio. Antes de qualquer alteração, guarde uma cópia de segurança de outros sites do alojamento. Não crie estes dados na base de produção.
 
-No phpMyAdmin **da base de ensaio**, execute, por ordem, `backend/sql/001_core.sql` a `backend/sql/006_confirmation.sql`. Pare se qualquer migração falhar; não avance com tabelas parcialmente instaladas. O SQL usa InnoDB, `CHECK` e chaves estrangeiras. Requer MySQL 8 ou MariaDB 10.6+.
+No phpMyAdmin **da base de ensaio**, execute, por ordem, `backend/sql/001_core.sql` a `backend/sql/007_manual_payment.sql`. Pare se qualquer migração falhar; não avance com tabelas parcialmente instaladas. O SQL usa InnoDB, `CHECK` e chaves estrangeiras. Requer MySQL 8 ou MariaDB 10.6+.
 
 ## 2. Configuração privada
 

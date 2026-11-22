@@ -8,7 +8,7 @@ Este diretório **ainda não é um backend de produção**. Contém esquema, end
 2. No servidor, coloque uma cópia de `private/config.example.php` como `config.php` **fora de `public_html`**, preenchendo as credenciais nesse ficheiro privado. Nunca carregue esse ficheiro para o Git ou para o ZIP público.
 3. Só depois de preparar o backend completo, coloque `public/api/index.php` na pasta `public_html/edijalmemoura/hospedae/api/`. O endpoint `/api/index.php?action=health` devolve apenas o estado de ligação, sem expor credenciais. As rotas `action=pousada`, `action=quartos` e `action=reservar` são **experimentais**: não devem ser publicadas sem autenticação, limites de taxa, política de privacidade e ensaio de concorrência no servidor.
 
-Aplique todas as migrações 001–006 por ordem. O registo usa palavras-passe com `password_hash`, cookies Secure/HttpOnly/SameSite e tokens CSRF; requer HTTPS, `trusted_origin` e `cookie_path` corretos no ficheiro privado de configuração. A sessão é obtida com `GET ?action=session`; `POST ?action=register|login|logout` exige `Origin` correto e o token CSRF no cabeçalho `X-CSRF-Token`. O registo não dispõe ainda de verificação por e-mail nem recuperação de palavra-passe: não abrir o serviço ao público. A primeira implementação de reserva pública bloqueia o quarto (`SELECT ... FOR UPDATE`) antes de verificar conflitos. **Todas** as operações futuras de reserva e bloqueio, incluindo as manuais, devem usar a mesma disciplina de bloqueio. Ainda faltam testes de segurança e de sessão no PHP real, recuperação de conta, funcionalidades internas avançadas, tarifas sazonais e pagamentos; sem esses pontos não existe sistema real completo. Nenhuma migração ou endpoint PHP foi executado numa base real neste ambiente.
+Aplique todas as migrações 001–007 por ordem. O registo usa palavras-passe com `password_hash`, cookies Secure/HttpOnly/SameSite e tokens CSRF; requer HTTPS, `trusted_origin` e `cookie_path` corretos no ficheiro privado de configuração. A sessão é obtida com `GET ?action=session`; `POST ?action=register|login|logout` exige `Origin` correto e o token CSRF no cabeçalho `X-CSRF-Token`. O registo não dispõe ainda de verificação por e-mail nem recuperação de palavra-passe: não abrir o serviço ao público. A primeira implementação de reserva pública bloqueia o quarto (`SELECT ... FOR UPDATE`) antes de verificar conflitos. **Todas** as operações futuras de reserva e bloqueio, incluindo as manuais, devem usar a mesma disciplina de bloqueio. Ainda faltam testes de segurança e de sessão no PHP real, recuperação de conta, funcionalidades internas avançadas, tarifas sazonais e pagamentos; sem esses pontos não existe sistema real completo. Nenhuma migração ou endpoint PHP foi executado numa base real neste ambiente.
 
 ## Operações internas experimentais
 
@@ -36,7 +36,7 @@ A tabela `auth_attempts` da migração 003 também limita pedidos por IP (`REMOT
 
 ## Ensaio de integração numa base descartável
 
-Após criar **uma base vazia de ensaio** cujo nome inclua o segmento `test`, aplique nela, por ordem, `sql/001_core.sql` a `sql/006_confirmation.sql`. Numa máquina com PHP 8.2+ CLI, PDO MySQL e acesso a essa base, guarde um `config.php` privado **fora de `public_html`** (modelo em `private/config.example.php`). Corra:
+Após criar **uma base vazia de ensaio** cujo nome inclua o segmento `test`, aplique nela, por ordem, `sql/001_core.sql` a `sql/007_manual_payment.sql`. Numa máquina com PHP 8.2+ CLI, PDO MySQL e acesso a essa base, guarde um `config.php` privado **fora de `public_html`** (modelo em `private/config.example.php`). Corra:
 
 ```sh
 RUN_PHP_INTEGRATION=I_UNDERSTAND_THIS_IS_A_DISPOSABLE_DATABASE \
@@ -48,7 +48,7 @@ O script recusa-se a correr sem confirmação, sem base com `test` no nome ou se
 
 ## Ensaio HTTP (sessões e pedidos paralelos)
 
-Use **outro domínio de ensaio independente** do domínio de produção, identificado por `test` ou `staging`, com HTTPS, PHP, migrações 001–006 aplicadas numa **base descartável** e `trusted_origin`/`cookie_path` privados corretos. O domínio `projetoredesnordeste.com.br` e os seus subdomínios estão explicitamente bloqueados neste teste. A partir de uma máquina com Node 20+:
+Use **outro domínio de ensaio independente** do domínio de produção, identificado por `test` ou `staging`, com HTTPS, PHP, migrações 001–007 aplicadas numa **base descartável** e `trusted_origin`/`cookie_path` privados corretos. O domínio `projetoredesnordeste.com.br` e os seus subdomínios estão explicitamente bloqueados neste teste. A partir de uma máquina com Node 20+:
 
 ```sh
 RUN_PHP_HTTP_INTEGRATION=I_UNDERSTAND_THIS_CREATES_TEST_ACCOUNTS \
@@ -60,11 +60,11 @@ O ensaio verifica cookies/sessão e CSRF, cria duas contas/quartos, tenta aceder
 
 ## Pacote de ensaio para Hostinger (não é produção)
 
-Com `VITE_BASE_PATH=/test/ npm run package:php:staging`, o projeto gera `artifacts/hospedae-PHP-ENSAIO.zip`. Extraia-o somente na subpasta `/test/` de **um domínio de ensaio separado**, nunca no domínio real. O comando recusa a raiz e caminhos sem segmento final `/test/` ou `/staging/`, e impede a inclusão de variáveis Supabase no build. O ZIP inclui apenas frontend e `backend/public/api/*.php`, sem credenciais ou SQL; as migrações 001–006 e o ficheiro `config.php` privado são preparados separadamente. No servidor PHP, `HOSPEDAE_CONFIG_PATH` precisa de apontar para o caminho absoluto de `config.php` fora de `public_html`. Verifique se a sua configuração Hostinger permite definir essa variável de ambiente e se PHP 8.2+ com PDO MySQL está disponível. Não use esta versão com hóspedes reais. O ZIP local está ignorado pelo Git.
+Com `VITE_BASE_PATH=/test/ npm run package:php:staging`, o projeto gera `artifacts/hospedae-PHP-ENSAIO.zip`. Extraia-o somente na subpasta `/test/` de **um domínio de ensaio separado**, nunca no domínio real. O comando recusa a raiz e caminhos sem segmento final `/test/` ou `/staging/`, e impede a inclusão de variáveis Supabase no build. O ZIP inclui apenas frontend e `backend/public/api/*.php`, sem credenciais ou SQL; as migrações 001–007 e o ficheiro `config.php` privado são preparados separadamente. No servidor PHP, `HOSPEDAE_CONFIG_PATH` precisa de apontar para o caminho absoluto de `config.php` fora de `public_html`. Verifique se a sua configuração Hostinger permite definir essa variável de ambiente e se PHP 8.2+ com PDO MySQL está disponível. Não use esta versão com hóspedes reais. O ZIP local está ignorado pelo Git.
 
 ## Diagnóstico read-only da instalação de ensaio
 
-Antes dos ensaios funcionais, no servidor de **testes**, corra `HOSPEDAE_TEST_CONFIG_PATH=/caminho/privado/config.php php backend/tests/diagnostic.php` por **PHP CLI**. O script verifica PHP 8.2+, extensões `pdo_mysql` e `mbstring`, configuração fora de `public_html`, base com `test` no nome, ligação, motor InnoDB, colunas das migrações 001–006, restrições `CHECK`, chaves estrangeiras e índices únicos. Não faz escrita nem mostra segredos. Um resultado «OK» **não** valida concorrência, sessões ou pagamentos. Nunca carregue `backend/tests/` para a pasta pública.
+Antes dos ensaios funcionais, no servidor de **testes**, corra `HOSPEDAE_TEST_CONFIG_PATH=/caminho/privado/config.php php backend/tests/diagnostic.php` por **PHP CLI**. O script verifica PHP 8.2+, extensões `pdo_mysql` e `mbstring`, configuração fora de `public_html`, base com `test` no nome, ligação, motor InnoDB, colunas das migrações 001–007, restrições `CHECK`, chaves estrangeiras e índices únicos. Não faz escrita nem mostra segredos. Um resultado «OK» **não** valida concorrência, sessões ou pagamentos. Nunca carregue `backend/tests/` para a pasta pública.
 
 ## Nome e link público no painel PHP
 
@@ -97,3 +97,7 @@ O ficheiro privado `config.php` precisa agora de `php_timezone` e `mysql_time_of
 ## Data local na reserva pública
 
 `GET ?action=pousada` devolve também `today` no fuso configurado para a instalação. O frontend PHP utiliza esta data no calendário e na sua validação prévia, em vez da data UTC do navegador. O servidor continua a recalcular datas e disponibilidade no momento da cotação e da criação; uma página aberta durante a mudança de dia pode ficar com a data anterior e o servidor rejeitará datas expiradas. No modo multi-fuso, será necessário definir o fuso por pousada.
+
+## Cobrança manual privada — migração 007
+
+Aplique `sql/007_manual_payment.sql` após 001–006. `GET ?action=my-payment-settings` e `POST ?action=update-payment-settings` consultam/guardam **apenas para a pousada da sessão** uma chave PIX opcional e um link HTTPS opcional. O servidor recusa links HTTP, com credenciais no URL, IPs ou destinos `.local`/`.internal`. Estes campos **não são segredos de API** nem são devolvidos pela reserva pública. Não há checkout InfinitePay, cobrança automática ou prova de pagamento: cada pousada deve confirmar qualquer pagamento pelos seus próprios canais e nunca marcar «pago» por mera criação da reserva. O ensaio HTTP verifica o isolamento e a rejeição de links inseguros.

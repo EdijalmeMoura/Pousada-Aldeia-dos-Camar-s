@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { PaymentSettings } from "@/components/php/PaymentSettings"
 import { OperationalSummary } from "@/components/php/OperationalSummary"
 import { BookingList } from "@/components/php/BookingList"
 import { PasswordSettings } from "@/components/php/PasswordSettings"
@@ -50,6 +51,7 @@ export default function PhpConsole() {
     <p role="status" className="rounded-xl border bg-accent p-4 text-sm">Este painel reduzido ainda não substitui as funcionalidades antigas. Não cobre tarifas sazonais, pagamentos ou check-in. Não use dados reais antes dos testes no alojamento.</p>
     <OperationalSummary />
     <PousadaSettings />
+    <PaymentSettings />
     <PasswordSettings />
     <div className="grid gap-6 lg:grid-cols-2">
       <Card><CardHeader><CardTitle>Quartos</CardTitle></CardHeader><CardContent className="space-y-4">

@@ -10,6 +10,11 @@ function operation(PDO $db, string $action, array $config): array {
     $account = currentAccount($db);
     if (!$account) throw new RuntimeException('Autenticação necessária.', 401);
     $tenant = $account['pousada_id'];
+    if ($action === 'my-payment-settings') {
+        $query = $db->prepare('SELECT chave_pix, link_pagamento FROM pousadas WHERE id = UNHEX(?) AND owner_id = UNHEX(?)');
+        $query->execute([$tenant, $account['id']]);
+        return $query->fetch(PDO::FETCH_ASSOC) ?: [];
+    }
     if ($action === 'my-summary') {
         // Valor de estadias ativas: nunca classificar como faturação ou pagamento recebido.
         $query = $db->prepare("SELECT
@@ -45,6 +50,26 @@ function operation(PDO $db, string $action, array $config): array {
     requireSameOrigin($config['trusted_origin'] ?? '');
     $body = authBody();
     requireCsrf($body);
+    if ($action === 'update-payment-settings') {
+        $pix = trim((string)($body['chave_pix'] ?? ''));
+        $link = trim((string)($body['link_pagamento'] ?? ''));
+        if (mb_strlen($pix) > 140 || preg_match('/[\x00-\x1f\x7f]/', $pix) || strlen($link) > 1024) {
+            throw new InvalidArgumentException('Dados de cobrança inválidos.');
+        }
+        if ($link !== '') {
+            $parts = parse_url($link);
+            $host = strtolower((string)($parts['host'] ?? ''));
+            if (!filter_var($link, FILTER_VALIDATE_URL) || ($parts['scheme'] ?? '') !== 'https'
+                || isset($parts['user']) || isset($parts['pass']) || !$host
+                || !str_contains($host, '.') || filter_var($host, FILTER_VALIDATE_IP)
+                || str_ends_with($host, '.local') || str_ends_with($host, '.internal')) {
+                throw new InvalidArgumentException('Use apenas um link de pagamento HTTPS público e válido.');
+            }
+        }
+        $update = $db->prepare('UPDATE pousadas SET chave_pix = ?, link_pagamento = ? WHERE id = UNHEX(?) AND owner_id = UNHEX(?)');
+        $update->execute([$pix, $link, $tenant, $account['id']]);
+        return ['chave_pix' => $pix, 'link_pagamento' => $link];
+    }
     if ($action === 'update-pousada') {
         $name = trim((string)($body['nome'] ?? ''));
         $slug = (string)($body['slug'] ?? '');

@@ -80,6 +80,17 @@ async function run() {
   check(reserved.status === 400, 'rota interna reservada rejeitada')
   const duplicate = await call('update-pousada', { session: b, body: { nome: 'Outra pousada', slug: renamedSlug } })
   check(duplicate.status === 409, 'slug de outra pousada rejeitado')
+  const paymentA = await call('update-payment-settings', { session: a, body: {
+    chave_pix: 'chave-de-ensaio@example.invalid', link_pagamento: 'https://example.org/pagamento-ensaio',
+  } })
+  check(paymentA.status === 200, 'dados de cobrança manual por pousada')
+  const paymentB = await call('my-payment-settings', { session: b })
+  check(paymentB.status === 200 && paymentB.result.chave_pix === '' && paymentB.result.link_pagamento === '',
+    'outra pousada não vê os dados de cobrança')
+  const insecure = await call('update-payment-settings', { session: a, body: {
+    chave_pix: '', link_pagamento: 'http://example.org/inseguro',
+  } })
+  check(insecure.status === 400, 'link HTTP inseguro recusado')
   const roomA = await addRoom(a, 'Quarto A')
   const roomB = await addRoom(b, 'Quarto B')
   const disabled = await call('update-room', { session: a, body: { id: roomA, nome: 'Quarto A', capacidade: 2, preco_base_centavos: 12000, ativo: false } })

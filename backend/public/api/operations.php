@@ -16,12 +16,12 @@ function operation(PDO $db, string $action, array $config): array {
         return $query->fetchAll(PDO::FETCH_ASSOC);
     }
     if ($action === 'my-bookings') {
-        $query = $db->prepare('SELECT HEX(id) AS id, HEX(quarto_id) AS quarto_id, nome_hospede, email, telefone, check_in, check_out, adultos, estado, valor_total_centavos / 100 AS valor_total, codigo_reserva, metodo_pagamento, consentimento_em, created_at FROM reservas WHERE pousada_id = UNHEX(?) ORDER BY created_at DESC LIMIT 500');
+        $query = $db->prepare('SELECT HEX(id) AS id, HEX(quarto_id) AS quarto_id, nome_hospede, email, telefone, check_in, check_out, adultos, estado, valor_total_centavos / 100 AS valor_total, codigo_reserva, metodo_pagamento, consentimento_em, cancelada_em, motivo_cancelamento, created_at FROM reservas WHERE pousada_id = UNHEX(?) ORDER BY created_at DESC LIMIT 500');
         $query->execute([$tenant]);
         return $query->fetchAll(PDO::FETCH_ASSOC);
     }
     if ($action === 'my-blocks') {
-        $query = $db->prepare('SELECT HEX(id) AS id, HEX(quarto_id) AS quarto_id, data_inicio, data_fim, motivo, created_at FROM bloqueios WHERE pousada_id = UNHEX(?) ORDER BY data_inicio DESC LIMIT 500');
+        $query = $db->prepare('SELECT HEX(id) AS id, HEX(quarto_id) AS quarto_id, data_inicio, data_fim, motivo, created_at FROM bloqueios WHERE pousada_id = UNHEX(?) AND removido_em IS NULL ORDER BY data_inicio DESC LIMIT 500');
         $query->execute([$tenant]);
         return $query->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -61,6 +61,40 @@ function operation(PDO $db, string $action, array $config): array {
             $insert->execute([$id, $tenant, $room, $start, $end, $reason]);
             $db->commit();
             return ['id' => $id];
+        } catch (Throwable $error) {
+            if ($db->inTransaction()) $db->rollBack();
+            throw $error;
+        }
+    }
+    if ($action === 'cancel-booking' || $action === 'remove-block') {
+        $id = (string)($body['id'] ?? '');
+        if (!preg_match('/^[0-9a-fA-F]{32}$/D', $id)) throw new InvalidArgumentException('Identificador inválido.');
+        $booking = $action === 'cancel-booking';
+        $reason = trim((string)($body['motivo'] ?? ''));
+        if ($booking && (mb_strlen($reason) < 5 || mb_strlen($reason) > 500)) {
+            throw new InvalidArgumentException('Indique um motivo de cancelamento (5 a 500 caracteres).');
+        }
+        $table = $booking ? 'reservas' : 'bloqueios';
+        // Primeiro obtém o quarto do registo deste tenant; depois bloqueia SEMPRE o quarto.
+        $lookup = $db->prepare("SELECT HEX(quarto_id) FROM $table WHERE pousada_id = UNHEX(?) AND id = UNHEX(?)");
+        $lookup->execute([$tenant, $id]);
+        $room = $lookup->fetchColumn();
+        if (!$room) throw new InvalidArgumentException('Registo não encontrado nesta pousada.');
+        $db->beginTransaction();
+        try {
+            $lock = $db->prepare('SELECT id FROM quartos WHERE pousada_id = UNHEX(?) AND id = UNHEX(?) FOR UPDATE');
+            $lock->execute([$tenant, $room]);
+            if (!$lock->fetchColumn()) throw new InvalidArgumentException('Quarto inexistente.');
+            if ($booking) {
+                $update = $db->prepare("UPDATE reservas SET estado = 'cancelada', cancelada_em = NOW(), motivo_cancelamento = ? WHERE pousada_id = UNHEX(?) AND quarto_id = UNHEX(?) AND id = UNHEX(?) AND estado IN ('pendente', 'confirmada')");
+                $update->execute([$reason, $tenant, $room, $id]);
+            } else {
+                $update = $db->prepare('UPDATE bloqueios SET removido_em = NOW() WHERE pousada_id = UNHEX(?) AND quarto_id = UNHEX(?) AND id = UNHEX(?) AND removido_em IS NULL');
+                $update->execute([$tenant, $room, $id]);
+            }
+            if ($update->rowCount() !== 1) throw new DomainException('O estado do registo já foi alterado. Atualize a página.');
+            $db->commit();
+            return ['ok' => true];
         } catch (Throwable $error) {
             if ($db->inTransaction()) $db->rollBack();
             throw $error;

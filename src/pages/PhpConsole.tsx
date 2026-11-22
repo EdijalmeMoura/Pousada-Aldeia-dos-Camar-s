@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { CalendarOperations } from "@/components/php/CalendarOperations"
 import { useAuth } from "@/hooks/useAuth"
 import { phpRequest } from "@/lib/phpBackend"
 import { phpWrite } from "@/lib/phpAuth"
@@ -60,6 +61,7 @@ export default function PhpConsole() {
         {bookings.isError && <p role="alert">Não foi possível carregar as reservas. <Button variant="link" onClick={() => bookings.refetch()}>Tentar novamente</Button></p>}
       </CardContent></Card>
     </div>
+    <CalendarOperations rooms={rooms.data ?? []} bookings={bookings.data ?? []} />
     <Card><CardHeader><CardTitle>Reservas registadas</CardTitle></CardHeader><CardContent><ul className="space-y-2">{bookings.data?.map(r => <li key={r.id} className="rounded-lg border p-3 text-sm"><strong>{r.codigo_reserva}</strong> · {r.nome_hospede} · {r.check_in} a {r.check_out} · {brl(Number(r.valor_total))} · {r.estado}</li>)}</ul></CardContent></Card>
   </main>
 }

@@ -15,7 +15,7 @@ function validStay(string $start, string $end, bool $future = true): int {
 function occupied(PDO $db, string $tenant, string $room, string $start, string $end): bool {
     $busy = $db->prepare("SELECT 1 FROM reservas WHERE pousada_id = UNHEX(?) AND quarto_id = UNHEX(?) AND estado IN ('pendente', 'confirmada') AND check_in < ? AND check_out > ? LIMIT 1");
     $busy->execute([$tenant, $room, $end, $start]);
-    $blocked = $db->prepare('SELECT 1 FROM bloqueios WHERE pousada_id = UNHEX(?) AND quarto_id = UNHEX(?) AND data_inicio < ? AND data_fim > ? LIMIT 1');
+    $blocked = $db->prepare('SELECT 1 FROM bloqueios WHERE pousada_id = UNHEX(?) AND quarto_id = UNHEX(?) AND removido_em IS NULL AND data_inicio < ? AND data_fim > ? LIMIT 1');
     $blocked->execute([$tenant, $room, $end, $start]);
     // Executar sempre ambas as consultas antes de consumir o resultado.
     return (bool)$busy->fetchColumn() || (bool)$blocked->fetchColumn();

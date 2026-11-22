@@ -25,3 +25,7 @@ Aplique `sql/002_booking_code.sql` e `sql/003_auth_rate_limit.sql` após 001. O 
 ## Painel PHP reduzido no frontend
 
 No modo de build `VITE_BACKEND=php`, login, registo, consulta de sessão e saída usam a sessão PHP; o token CSRF é mantido apenas em memória. `/app` mostra só criação/listagem de quartos e reservas manuais/listagem; links de funcionalidades antigas não são exibidos. O nome introduzido no registo é o **nome da pousada**. A conta PHP ainda não tem confirmação de e-mail, recuperação de palavra-passe ou alterações/cancelamento de reservas. O pacote de produção PHP permanece indisponível até estas lacunas e o teste em MySQL real serem resolvidos.
+
+## Cancelamentos e bloqueios — migração 004
+
+Aplique `sql/004_cancellations.sql` **após** 001–003. `POST ?action=cancel-booking` recebe `id` e `motivo` (5–500 caracteres). Só cancela reservas pendentes/confirmadas da pousada da sessão; guarda motivo e data em vez de apagar. `POST ?action=remove-block` recebe `id` e marca o bloqueio como removido, mantendo o registo histórico. Ambas as operações verificam a pertença à pousada e bloqueiam o quarto na transação. Não há integração de cobrança ou reembolso: qualquer pagamento externo exige análise e ação manuais. A interface reduzida mostra estes controlos, mas **não execute a migração nem publique o painel em produção sem testes de sessão, concorrência e isolamento numa base descartável**.

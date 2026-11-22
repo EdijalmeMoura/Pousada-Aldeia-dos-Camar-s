@@ -108,12 +108,20 @@ async function run() {
   const bookingsB = await call('my-bookings', { session: b })
   check(bookingsA.status === 200 && bookingsB.status === 200 && bookingsA.result.length === 1 && bookingsB.result.length === 0,
     'reservas privadas isoladas')
+  const summaryA = await call('my-summary', { session: a })
+  const summaryB = await call('my-summary', { session: b })
+  check(summaryA.status === 200 && summaryA.result.pendentes === 1 && summaryA.result.valor_reservado === 240
+    && summaryB.status === 200 && summaryB.result.pendentes === 0 && summaryB.result.valor_reservado === 0,
+  'resumo operacional isolado e valor reservado não pago')
   const wrongConfirmation = await call('confirm-booking', { session: b, body: { id: bookingsA.result[0].id } })
   check(wrongConfirmation.status === 400, 'outra pousada não confirma a reserva')
   const confirmed = await call('confirm-booking', { session: a, body: { id: bookingsA.result[0].id } })
   check(confirmed.status === 200 && confirmed.result.estado === 'confirmada', 'estadia confirmada sem pagamento')
   const again = await call('confirm-booking', { session: a, body: { id: bookingsA.result[0].id } })
   check(again.status === 409, 'confirmação duplicada rejeitada')
+  const summaryConfirmed = await call('my-summary', { session: a })
+  check(summaryConfirmed.result.pendentes === 0 && summaryConfirmed.result.confirmadas === 1,
+    'resumo atualizado após confirmação')
   const confirmedList = await call('my-bookings', { session: a })
   check(confirmedList.result[0]?.confirmada_em, 'momento de confirmação registado')
   const conflict = await call('add-block', { session: a, body: { quarto_id: roomA, data_inicio: start, data_fim: end, motivo: 'ensaio' } })

@@ -10,6 +10,23 @@ function operation(PDO $db, string $action, array $config): array {
     $account = currentAccount($db);
     if (!$account) throw new RuntimeException('Autenticação necessária.', 401);
     $tenant = $account['pousada_id'];
+    if ($action === 'my-summary') {
+        // Valor de estadias ativas: nunca classificar como faturação ou pagamento recebido.
+        $query = $db->prepare("SELECT
+            COUNT(CASE WHEN estado = 'pendente' THEN 1 END) AS pendentes,
+            COUNT(CASE WHEN estado = 'confirmada' THEN 1 END) AS confirmadas,
+            COUNT(CASE WHEN estado IN ('pendente', 'confirmada') AND check_in = CURRENT_DATE() THEN 1 END) AS chegadas_hoje,
+            COALESCE(SUM(CASE WHEN estado IN ('pendente', 'confirmada') THEN valor_total_centavos ELSE 0 END), 0) AS valor_reservado_centavos
+            FROM reservas WHERE pousada_id = UNHEX(?)");
+        $query->execute([$tenant]);
+        $row = $query->fetch(PDO::FETCH_ASSOC);
+        return [
+            'pendentes' => (int)$row['pendentes'],
+            'confirmadas' => (int)$row['confirmadas'],
+            'chegadas_hoje' => (int)$row['chegadas_hoje'],
+            'valor_reservado' => (int)$row['valor_reservado_centavos'] / 100,
+        ];
+    }
     if ($action === 'my-rooms') {
         $query = $db->prepare('SELECT HEX(id) AS id, nome, capacidade, preco_base_centavos / 100 AS preco_base, ativo, created_at FROM quartos WHERE pousada_id = UNHEX(?) ORDER BY created_at DESC');
         $query->execute([$tenant]);

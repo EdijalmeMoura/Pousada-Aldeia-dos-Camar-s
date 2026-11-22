@@ -40,7 +40,7 @@ export function CalendarOperations({ rooms, bookings }: { rooms: Room[]; booking
     setBusy(true)
     try {
       await phpWrite("cancel-booking", { id, motivo: reason.trim() })
-      setReason(""); await qc.invalidateQueries({ queryKey: ["php-bookings"] }); toast.success("Reserva cancelada; verifique se é necessário reembolso")
+      setReason(""); await qc.invalidateQueries({ queryKey: ["php-bookings"] }); await qc.invalidateQueries({ queryKey: ["php-summary"] }); toast.success("Reserva cancelada; verifique se é necessário reembolso")
     } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível cancelar") }
     finally { setBusy(false) }
   }

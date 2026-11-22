@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
+import { OperationalSummary } from "@/components/php/OperationalSummary"
 import { BookingList } from "@/components/php/BookingList"
 import { PasswordSettings } from "@/components/php/PasswordSettings"
 import { RoomEditor } from "@/components/php/RoomEditor"
@@ -39,7 +40,7 @@ export default function PhpConsole() {
     event.preventDefault(); setBusy(true)
     try {
       await phpWrite("add-booking", booking)
-      await qc.invalidateQueries({ queryKey: ["php-bookings"] }); toast.success("Reserva registada")
+      await qc.invalidateQueries({ queryKey: ["php-bookings"] }); await qc.invalidateQueries({ queryKey: ["php-summary"] }); toast.success("Reserva registada")
       setBooking({ ...booking, nome_hospede: "", email: "", telefone: "", check_in: "", check_out: "" })
     } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível criar a reserva") }
     finally { setBusy(false) }
@@ -47,6 +48,7 @@ export default function PhpConsole() {
   return <main className="mx-auto max-w-5xl space-y-6 p-4 md:p-8">
     <header className="flex flex-wrap items-center justify-between gap-4"><div><h1 className="text-2xl font-bold">{profile?.nome_pousada}</h1><p className="text-sm text-muted-foreground">Gestão PHP em ensaio · sem cobrança integrada</p></div><Button variant="outline" onClick={async () => { try { await signOut(); navigate("/login") } catch { toast.error("Não foi possível terminar a sessão") } }}>Sair</Button></header>
     <p role="status" className="rounded-xl border bg-accent p-4 text-sm">Este painel reduzido ainda não substitui as funcionalidades antigas. Não cobre tarifas sazonais, pagamentos ou check-in. Não use dados reais antes dos testes no alojamento.</p>
+    <OperationalSummary />
     <PousadaSettings />
     <PasswordSettings />
     <div className="grid gap-6 lg:grid-cols-2">

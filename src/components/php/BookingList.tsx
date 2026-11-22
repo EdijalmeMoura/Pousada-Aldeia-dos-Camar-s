@@ -19,6 +19,7 @@ export function BookingList({ bookings, rooms, pousada }: { bookings: PhpBooking
     try {
       await phpWrite("confirm-booking", { id })
       await qc.invalidateQueries({ queryKey: ["php-bookings"] })
+      await qc.invalidateQueries({ queryKey: ["php-summary"] })
       toast.success("Estadia confirmada. Contacte o hóspede manualmente; não foi confirmada nenhuma cobrança.")
     } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível confirmar") }
     finally { setBusy(false) }

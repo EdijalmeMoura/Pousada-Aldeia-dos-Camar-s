@@ -85,3 +85,7 @@ Aplique `sql/006_confirmation.sql` depois de 001–005. `POST ?action=confirm-bo
 ## Contacto manual e exportação no painel PHP
 
 A lista de reservas mostra o contacto do hóspede e, apenas após confirmar a estadia, permite **preparar** uma mensagem no e-mail ou WhatsApp do operador. Nada é enviado automaticamente e a mensagem diz explicitamente que o pagamento não foi verificado na plataforma. O botão CSV exporta as reservas carregadas no navegador, incluindo dados pessoais; as células são protegidas contra fórmulas de folhas de cálculo. Proteja o ficheiro descarregado e partilhe-o apenas com pessoas autorizadas. Não existe ainda registo de envio no servidor, nem prova de entrega da mensagem.
+
+## Resumo operacional (sem pagamentos)
+
+`GET ?action=my-summary` exige sessão e devolve apenas contagens e valor agregado da **pousada autenticada**: reservas pendentes, confirmadas, chegadas do dia e valor reservado dessas duas categorias. Não apresenta hóspedes nem valores de outras pousadas. **Valor reservado não é dinheiro recebido**; não use o número como faturação. «Hoje» segue `CURRENT_DATE()` do MySQL: confirme o fuso horário configurado na ligação antes de usar esta métrica. O ensaio HTTP verifica o isolamento e a passagem de pendente a confirmada.

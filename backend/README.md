@@ -113,3 +113,7 @@ A página inicial e o ecrã de acesso do build `VITE_BACKEND=php` mostram apenas
 ## Guarda de ensaio contra publicação acidental
 
 O PHP deste repositório **não tem modo de produção**. Antes de ligar ao MySQL, cada pedido exige `environment = staging`, base com segmento `test`, origem HTTPS num domínio separado de `projetoredesnordeste.com.br`, `HTTP_HOST` correspondente e `cookie_path` igual à subpasta `/test/` ou `/staging/` onde o endpoint está instalado. O exemplo privado foi atualizado para um domínio/base de ensaio. Se colocar o ZIP no site real ou o ligar à base real, o endpoint deve responder HTTP 503 sem criar contas/reservas. `backend/tests/staging_guard.php` é um teste de guarda por PHP CLI **sem base**; continua a não ter sido executado aqui, pois falta PHP. A barreira é adicional, não substitui isolamento de credenciais, HTTPS ou revisão antes de produção.
+
+## Execução PHP real na CI (sem MySQL)
+
+A CI instala PHP CLI e `mbstring`, executa `php -l` nos ficheiros PHP públicos e de teste e corre `backend/tests/staging_guard.php` e `backend/tests/validation.php`. Estes testes exercitam em PHP a proteção do domínio de ensaio, datas, formato da reserva e consentimento, **sem acesso à base**. Não cobrem SQL, PHP-FPM/Apache, sessões HTTP, concorrência, pagamentos ou a Hostinger. O resultado da execução remota da CI deve ser confirmado no GitHub; análise sintática local por JavaScript continua a ser apenas análise estática.

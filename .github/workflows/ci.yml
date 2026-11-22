@@ -17,6 +17,14 @@ jobs:
       - run: npm test
       - run: npm run test:deploy
       - run: npm run test:php:syntax
+      - name: Executar testes PHP CLI sem base de dados
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y php-cli php-mbstring
+          php -v
+          find backend/public/api backend/tests -name '*.php' -print0 | xargs -0 -n1 php -l
+          php backend/tests/staging_guard.php
+          php backend/tests/validation.php
       - run: npm run test:php:http:guard
       - run: python3 -m unittest discover -s scripts -p "test_package*.py"
       - run: npm run build

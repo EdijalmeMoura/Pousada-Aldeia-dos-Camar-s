@@ -104,3 +104,7 @@ Aplique `supabase/migrations/008_cancellations.sql` depois da `007`. Reservas pe
 ## Conteúdo público e segurança da demonstração
 
 A landing não apresenta depoimentos, avaliações ou métricas de clientes que não foram verificados. Os planos estão identificados como indicativos; a faturação de subscrições não está ativa. Sem Supabase, login e registo são apenas uma demonstração: os novos registos guardam um hash PBKDF2 com salt em vez de palavras-passe em claro; contas locais antigas são migradas depois de um início de sessão válido. Isto **não torna o localStorage uma autenticação segura**: qualquer pessoa com acesso ao mesmo navegador pode manipular os dados, e scripts no mesmo domínio podem aceder ao armazenamento. Não use palavras-passe pessoais ou dados reais de hóspedes neste modo. Para produção, configure Supabase Auth e RLS e teste isolamento de contas.
+
+## Pré-publicação na Hostinger
+
+Consulte [docs/DEPLOY-HOSTINGER.md](docs/DEPLOY-HOSTINGER.md) para a sequência Supabase → build → Hostinger → testes. Use `npm run build:production` para impedir que um build sem URL e chave **pública** de Supabase seja publicado como se fosse uma aplicação operacional. O build de demonstração (`npm run build`) continua disponível sem Supabase. O pré-voo é testado com `npm run test:deploy` e executado no CI; não substitui testes de migrações, RLS e pagamento numa instância real. Ficheiros `.env.*` locais são ignorados pelo Git, exceto `.env.example`.

@@ -6,7 +6,7 @@ import { hashDemoPassword, verifyDemoPassword, type DemoAccount } from "@/lib/de
 interface User { id: string; email: string; nome?: string }
 interface AuthCtx {
   user: User | null; profile: Profile | null; loading: boolean
-  signUp: (email: string, password: string, nome: string) => Promise<void>
+  signUp: (email: string, password: string, nome: string) => Promise<boolean>
   signIn: (email: string, password: string) => Promise<void>
   signInGoogle: () => Promise<void>
   signOut: () => Promise<void>
@@ -49,8 +49,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { nome } } })
       if (error) throw error
+      if (!data.session) return false // confirmação por e-mail: sem sessão não há acesso ao perfil/RLS
       if (data.user) { const u = { id: data.user.id, email, nome }; setUser(u); await loadProfile(u) }
-      return
+      return true
     }
     const users = JSON.parse(localStorage.getItem("pousada_users_v1") ?? "[]") as DemoAccount[]
     if (users.some((x) => x.email === email)) throw new Error("Já existe uma conta com este e-mail. Faça login.")
@@ -58,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     users.push(u); localStorage.setItem("pousada_users_v1", JSON.stringify(users))
     localStorage.setItem(LS_USER, JSON.stringify({ id: u.id, email, nome }))
     setUser({ id: u.id, email, nome }); await loadProfile({ id: u.id, email, nome })
+    return true
   }
 
   const signIn = async (email: string, password: string) => {

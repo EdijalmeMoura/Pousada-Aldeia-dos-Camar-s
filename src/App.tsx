@@ -44,7 +44,7 @@ export default function App() {
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/privacidade" element={<Privacidade />} />
                 <Route path="/termos" element={<Termos />} />
-                <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+                <Route path="/onboarding" element={<ProtectedRoute onboarding><Onboarding /></ProtectedRoute>} />
                 <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
                   <Route index element={<Dashboard />} />
                   <Route path="quartos" element={<Quartos />} />

@@ -120,3 +120,7 @@ A página pública só mostra fotografias explicitamente configuradas nos quarto
 ## Isolamento entre pousadas
 
 Aplique `supabase/migrations/010_tenant_foreign_keys.sql` **após** a `009`. Chaves estrangeiras compostas impedem que tarifas, reservas e bloqueios de uma conta referenciem quartos de outra conta, e que um check-in referencie uma reserva alheia. Esta proteção complementa RLS: a política por `user_id` isoladamente não garante a propriedade da entidade associada. Se já houver dados inconsistentes, a migração falha intencionalmente; não os ignore, investigue e corrija antes de voltar a aplicar. O diagnóstico `supabase/tests/production_checks.sql` verifica a presença destas relações, mas o comportamento deve ser testado com duas contas reais.
+
+## Registo e onboarding
+
+O login pede apenas e-mail e palavra-passe; o nome pertence exclusivamente ao registo. `/onboarding` permite o acesso ao utilizador autenticado que ainda não concluiu a configuração, sem se redirecionar para si próprio. Quando Supabase Auth exigir confirmação de e-mail, o registo não assume que existe sessão: apresenta a indicação para confirmar a conta e iniciar sessão depois. No modo local, o botão de demonstração não é apresentado como OAuth Google real. Os testes verificam validação e destinos das rotas; o fluxo Supabase ainda precisa de teste com configuração de e-mail/OAuth no projeto real.

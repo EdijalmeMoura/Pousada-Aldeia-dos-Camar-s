@@ -6,7 +6,10 @@ require_once __DIR__ . '/availability.php';
 function publicPousada(PDO $db, string $slug): ?array {
     $query = $db->prepare('SELECT HEX(id) AS id, nome AS nome_pousada, slug FROM pousadas WHERE slug = ?');
     $query->execute([$slug]);
-    return $query->fetch(PDO::FETCH_ASSOC) ?: null;
+    $pousada = $query->fetch(PDO::FETCH_ASSOC);
+    if (!$pousada) return null;
+    $pousada['today'] = date('Y-m-d');
+    return $pousada;
 }
 
 function publicRooms(PDO $db, string $slug): array {

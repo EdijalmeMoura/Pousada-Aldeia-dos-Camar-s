@@ -3,7 +3,7 @@ import { isSupabaseConfigured, supabase } from "./supabase"
 import { uid } from "./utils"
 import { isPhpBackend, phpRequest } from "./phpBackend"
 
-export type PublicPousada = Pick<Profile, "id" | "nome_pousada" | "slug" | "cor" | "logo_url">
+export type PublicPousada = Pick<Profile, "id" | "nome_pousada" | "slug" | "cor" | "logo_url"> & { today?: string }
 export type PublicQuarto = Pick<Quarto, "id" | "nome" | "descricao" | "capacidade" | "preco_base" | "comodidades" | "foto_url" | "ativo">
 export type BookingInput = Pick<Reserva, "nome_hospede" | "email" | "telefone" | "check_in" | "check_out" | "adultos" | "metodo_pagamento">
 export type BookingQuote = { valor_total: number; noites: number }
@@ -12,7 +12,7 @@ export type BookingResult = Pick<Reserva, "codigo_reserva" | "valor_total">
 
 export async function publicPousada(slug: string): Promise<PublicPousada | null> {
   if (isPhpBackend) {
-    const p = await phpRequest<{ id: string; nome_pousada: string; slug: string } | null>("pousada", { slug })
+    const p = await phpRequest<{ id: string; nome_pousada: string; slug: string; today: string } | null>("pousada", { slug })
     return p ? { ...p, cor: "#0891b2", logo_url: "" } : null
   }
   if (isSupabaseConfigured && supabase) {
@@ -40,18 +40,18 @@ export async function publicQuartos(slug: string, ownerId: string): Promise<Publ
       ({ id, nome, descricao, capacidade, preco_base, comodidades, foto_url, ativo }))
 }
 
-export function bookingDates(input: Pick<BookingInput, "check_in" | "check_out" | "adultos">, capacity: number) {
+export function bookingDates(input: Pick<BookingInput, "check_in" | "check_out" | "adultos">, capacity: number, today = new Date().toISOString().slice(0, 10)) {
   const start = new Date(`${input.check_in}T12:00:00Z`)
   const end = new Date(`${input.check_out}T12:00:00Z`)
-  const today = new Date().toISOString().slice(0, 10)
   const nights = Math.round((end.getTime() - start.getTime()) / 864e5)
   if (!Number.isFinite(nights) || input.check_in < today || nights < 1 || nights > 90) throw new Error("Escolha datas futuras válidas (até 90 noites).")
   if (input.adultos < 1 || input.adultos > capacity) throw new Error("O número de hóspedes excede a capacidade do quarto.")
   return nights
 }
 
-export async function quotePublicBooking(slug: string, ownerId: string, room: PublicQuarto, input: Pick<BookingInput, "check_in" | "check_out" | "adultos">): Promise<BookingQuote> {
-  const nights = bookingDates(input, room.capacidade)
+export async function quotePublicBooking(slug: string, ownerId: string, room: PublicQuarto, input: Pick<BookingInput, "check_in" | "check_out" | "adultos">, serverToday?: string): Promise<BookingQuote> {
+  if (isPhpBackend && !serverToday) throw new Error("Não foi possível obter a data local da pousada. Atualize a página.")
+  const nights = bookingDates(input, room.capacidade, serverToday)
   if (isPhpBackend) return phpRequest<BookingQuote>("quote", {
     slug, quarto_id: room.id, check_in: input.check_in, check_out: input.check_out, adultos: String(input.adultos),
   })
@@ -81,9 +81,10 @@ export async function quotePublicBooking(slug: string, ownerId: string, room: Pu
   return { valor_total: total, noites: nights }
 }
 
-export async function createPublicBooking(slug: string, ownerId: string, room: PublicQuarto, input: PublicBookingInput): Promise<BookingResult> {
+export async function createPublicBooking(slug: string, ownerId: string, room: PublicQuarto, input: PublicBookingInput, serverToday?: string): Promise<BookingResult> {
+  if (isPhpBackend && !serverToday) throw new Error("Não foi possível obter a data local da pousada. Atualize a página.")
   if (input.aceito_privacidade !== true) throw new Error("É necessário aceitar os termos e a política de privacidade.")
-  bookingDates(input, room.capacidade)
+  bookingDates(input, room.capacidade, serverToday)
   if (isPhpBackend) return phpRequest<BookingResult>("reservar", {}, { slug, quarto_id: room.id, ...input })
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.rpc("criar_reserva_publica_com_consentimento", {

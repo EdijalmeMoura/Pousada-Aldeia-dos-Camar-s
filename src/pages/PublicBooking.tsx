@@ -35,19 +35,20 @@ export default function PublicBooking() {
 
   const form = useForm<PublicBookingForm>({ resolver: zodResolver(publicBookingSchema), defaultValues: { metodo_pagamento: "pix", adultos: 2, aceito_privacidade: false } })
 
+  const today = isPhpBackend ? profileQ.data?.today : new Date().toISOString().slice(0, 10)
   const entrada = form.watch("check_in")
   const saida = form.watch("check_out")
   const adultos = form.watch("adultos")
   const quoteQ = useQuery({
     queryKey: ["cotacao", slug, selected?.id, entrada, saida, adultos],
-    queryFn: () => quotePublicBooking(slug!, profileQ.data!.id, selected!, { check_in: entrada, check_out: saida, adultos }),
+    queryFn: () => quotePublicBooking(slug!, profileQ.data!.id, selected!, { check_in: entrada, check_out: saida, adultos }, today),
     enabled: Boolean(selected && profileQ.data && entrada && saida && adultos),
     retry: false,
   })
 
   const book = useMutation({
     mutationFn: async (data: PublicBookingForm) => {
-      return createPublicBooking(slug!, profileQ.data!.id, selected!, data)
+      return createPublicBooking(slug!, profileQ.data!.id, selected!, data, today)
     },
     onSuccess: (r) => {
       setDone(`${r.codigo_reserva} · ${brl(r.valor_total)}`)
@@ -148,8 +149,8 @@ export default function PublicBooking() {
                     <div className="space-y-2"><Label htmlFor="telefone">Telefone</Label><Input id="telefone" {...form.register("telefone")} placeholder="81987654321" inputMode="numeric" />{form.formState.errors.telefone && <p className="text-sm text-destructive">{form.formState.errors.telefone.message}</p>}</div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="space-y-2"><Label htmlFor="check_in">Entrada</Label><Input id="check_in" type="date" min={new Date().toISOString().slice(0, 10)} aria-invalid={Boolean(form.formState.errors.check_in)} {...form.register("check_in")} />{form.formState.errors.check_in && <p role="alert" className="text-sm text-destructive">{form.formState.errors.check_in.message}</p>}</div>
-                    <div className="space-y-2"><Label htmlFor="check_out">Saída</Label><Input id="check_out" type="date" min={form.watch("check_in") || new Date().toISOString().slice(0, 10)} aria-invalid={Boolean(form.formState.errors.check_out)} {...form.register("check_out")} />{form.formState.errors.check_out && <p role="alert" className="text-sm text-destructive">{form.formState.errors.check_out.message}</p>}</div>
+                    <div className="space-y-2"><Label htmlFor="check_in">Entrada</Label><Input id="check_in" type="date" min={today} aria-invalid={Boolean(form.formState.errors.check_in)} {...form.register("check_in")} />{form.formState.errors.check_in && <p role="alert" className="text-sm text-destructive">{form.formState.errors.check_in.message}</p>}</div>
+                    <div className="space-y-2"><Label htmlFor="check_out">Saída</Label><Input id="check_out" type="date" min={form.watch("check_in") || today} aria-invalid={Boolean(form.formState.errors.check_out)} {...form.register("check_out")} />{form.formState.errors.check_out && <p role="alert" className="text-sm text-destructive">{form.formState.errors.check_out.message}</p>}</div>
                     <div className="space-y-2"><Label htmlFor="adultos">Adultos</Label><Input id="adultos" type="number" min={1} max={selected.capacidade} aria-invalid={Boolean(form.formState.errors.adultos)} {...form.register("adultos")} />{form.formState.errors.adultos && <p role="alert" className="text-sm text-destructive">{form.formState.errors.adultos.message}</p>}</div>
                   </div>
                   {Number(adultos) > selected.capacidade && <p role="alert" className="text-sm text-destructive">Este quarto aceita até {selected.capacidade} pessoa(s).</p>}

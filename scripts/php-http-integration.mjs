@@ -74,6 +74,7 @@ async function run() {
   const oldPage = await call('pousada', { params: { slug: a.account.slug } })
   const newPage = await call('pousada', { params: { slug: renamedSlug } })
   check(oldPage.status === 200 && oldPage.result === null && newPage.result?.slug === renamedSlug, 'link antigo deixa de resolver')
+  check(/^\d{4}-\d{2}-\d{2}$/.test(newPage.result.today), 'data local devolvida ao formulário público')
   a.account.slug = renamedSlug
   const reserved = await call('update-pousada', { session: b, body: { nome: 'Outra pousada', slug: 'login' } })
   check(reserved.status === 400, 'rota interna reservada rejeitada')

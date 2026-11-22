@@ -93,3 +93,7 @@ A lista de reservas mostra o contacto do hóspede e, apenas após confirmar a es
 ## Fuso horário da pousada
 
 O ficheiro privado `config.php` precisa agora de `php_timezone` e `mysql_time_offset`, como no exemplo (`America/Recife` e `-03:00`). O backend recusa pedidos se faltarem ou se os dois fusos não coincidirem no momento atual; define o fuso da ligação MySQL antes de avaliar `CURRENT_DATE()` ou `NOW()`. Isto alinha a validação de datas, a aceitação de privacidade e «chegadas hoje». O diagnóstico de ensaio confirma a configuração. **Esta versão usa um único fuso por instalação**, não um fuso por pousada; se houver pousadas noutras regiões do Brasil, será necessário guardar e aplicar o fuso de cada pousada antes de disponibilizar a plataforma a todas. Não altere o fuso de uma base com dados reais sem planear o impacto nos horários já registados.
+
+## Data local na reserva pública
+
+`GET ?action=pousada` devolve também `today` no fuso configurado para a instalação. O frontend PHP utiliza esta data no calendário e na sua validação prévia, em vez da data UTC do navegador. O servidor continua a recalcular datas e disponibilidade no momento da cotação e da criação; uma página aberta durante a mudança de dia pode ficar com a data anterior e o servidor rejeitará datas expiradas. No modo multi-fuso, será necessário definir o fuso por pousada.

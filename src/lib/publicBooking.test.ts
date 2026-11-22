@@ -33,6 +33,12 @@ describe("reserva pública em demonstração", () => {
     expect(() => bookingDates({ ...booking(), adultos: 3 }, 2)).toThrow("capacidade")
   })
 
+  it("aceita hoje no fuso da pousada mesmo quando UTC já passou para amanhã", () => {
+    const input = { check_in: "2027-01-10", check_out: "2027-01-11", adultos: 2 }
+    expect(bookingDates(input, 2, "2027-01-10")).toBe(1)
+    expect(() => bookingDates(input, 2, "2027-01-11")).toThrow("datas")
+  })
+
   it("recusa pedidos sem declaração de aceitação", async () => {
     await expect(createPublicBooking("pousada", "owner", room, { ...booking(), aceito_privacidade: false })).rejects.toThrow("aceitar")
   })

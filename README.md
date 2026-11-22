@@ -84,3 +84,7 @@ Se a hospedagem não permitir `.htaccess` ou uma regra de fallback para `index.h
 ## Calendário e bloqueios
 
 Aplique `supabase/migrations/007_calendar_blocks.sql` depois da `006`. Em **/app/calendario** a pousada consulta reservas por quarto, bloqueia períodos (saída exclusiva) para manutenção/uso privado e remove bloqueios. A API pública recusa cotação e criação sobre datas bloqueadas; a migração impede também reservas inseridas fora da API pública e valida conflitos na criação interna do proprietário, incluindo tarifa de temporada e lotação. O bloqueio e as reservas públicas usam a mesma linha do quarto para serializar operações concorrentes. Os testes locais (`npm test`) cobrem bloqueios e datas adjacentes. Esta migração ainda deve ser aplicada e ensaiada numa instância Supabase antes de aceitar reservas reais.
+
+## Exportação de reservas
+
+Na página **Reservas**, o proprietário pode descarregar CSV filtrado por data de entrada e estado, para gestão e reconciliação. O ficheiro é gerado no navegador com os dados já autorizados para a conta; não é enviado a serviços terceiros. As células de texto são protegidas contra fórmulas de folhas de cálculo. O CSV contém dados pessoais: guarde-o em local seguro e elimine cópias de que já não necessita. Reservas marcadas como **Pago (verificado)** não podem ser eliminadas pela interface nem pela política de base de dados da migração `006_payment_safety.sql`.

@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EmptyState } from "@/components/EmptyState"
+import { ReservationExport } from "@/components/ReservationExport"
 
 const schema = z.object({
   quarto_id: z.string().min(1, "Escolha o quarto"),
@@ -98,9 +99,13 @@ export default function Reservas() {
   })
 
   const del = useMutation({
-    mutationFn: (id: string) => dbDelete("reservas", id),
+    mutationFn: (id: string) => {
+      const r = (reservasQ.data ?? []).find(x => x.id === id)
+      if (r?.pagamento_estado === "pago") throw new Error("Não é possível eliminar uma reserva paga. Mantenha o histórico para reconciliação.")
+      return dbDelete("reservas", id)
+    },
     onSuccess: () => { toast.success("Reserva removida."); qc.invalidateQueries({ queryKey: ["reservas"] }) },
-    onError: () => toast.error("Não foi possível remover a reserva."),
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível remover a reserva."),
   })
 
   return (
@@ -141,6 +146,7 @@ export default function Reservas() {
         </Dialog>
       </div>
 
+      <ReservationExport rows={reservasQ.data ?? []} />
       <Card>
         <CardContent className="p-0 md:p-2">
           {reservasQ.isLoading ? <div className="space-y-2 p-4"><Skeleton className="h-10" /><Skeleton className="h-10" /><Skeleton className="h-10" /></div>
@@ -169,7 +175,7 @@ export default function Reservas() {
                             <Button variant="ghost" size="icon" aria-label="Enviar dados de pagamento ao hóspede por WhatsApp" asChild>
                               <a href={waLink(r.telefone, paymentMessage(r, { nome_pousada: profile?.nome_pousada || "Pousada", chave_pix: profile?.chave_pix || "", link_pagamento: profile?.link_pagamento || "" }))} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4 text-primary" /></a>
                             </Button>
-                            <Button variant="ghost" size="icon" aria-label="Remover reserva" onClick={() => del.mutate(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                            <Button variant="ghost" size="icon" aria-label="Remover reserva" disabled={r.pagamento_estado === "pago" || del.isPending} title={r.pagamento_estado === "pago" ? "Reservas pagas não podem ser removidas" : "Remover reserva"} onClick={() => del.mutate(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                           </div>
                         </TableCell>
                       </TableRow>

@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/availability.php';
 
 /** Funções públicas: devolvem apenas dados de catálogo. Identificadores binários ficam internos. */
 function publicPousada(PDO $db, string $slug): ?array {
@@ -52,11 +53,7 @@ function createPublicBooking(PDO $db, array $input, bool $manual = false): array
         if (!$details || (int)$details['capacidade'] < $data['adults']) {
             throw new InvalidArgumentException('Quarto indisponível ou capacidade excedida.');
         }
-        $busy = $db->prepare("SELECT 1 FROM reservas WHERE pousada_id = UNHEX(?) AND quarto_id = UNHEX(?) AND estado IN ('pendente', 'confirmada') AND check_in < ? AND check_out > ? LIMIT 1");
-        $busy->execute([$details['pousada_id'], $data['room'], $data['end'], $data['start']]);
-        $blocked = $db->prepare('SELECT 1 FROM bloqueios WHERE pousada_id = UNHEX(?) AND quarto_id = UNHEX(?) AND data_inicio < ? AND data_fim > ? LIMIT 1');
-        $blocked->execute([$details['pousada_id'], $data['room'], $data['end'], $data['start']]);
-        if ($busy->fetchColumn() || $blocked->fetchColumn()) {
+        if (occupied($db, $details['pousada_id'], $data['room'], $data['start'], $data['end'])) {
             throw new DomainException('Quarto indisponível para estas datas.');
         }
         $nights = (new DateTimeImmutable($data['start']))->diff(new DateTimeImmutable($data['end']))->days;

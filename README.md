@@ -148,3 +148,7 @@ A reserva pública valida e explica datas de entrada/saída, limite de 90 noites
 ## Ensaio RLS com duas pousadas
 
 O comando `npm run test:supabase` prepara um teste de integração bloqueado por defeito para um projeto Supabase **de ensaio**: cria duas contas efémeras, verifica isolamento RLS, RPCs anónimas e sobreposição de reservas, e tenta removê-las no fim. Consulte `docs/DEPLOY-HOSTINGER.md` para as variáveis privadas e cuidados. Não foi executado aqui porque não existe projeto Supabase configurado; não substitui testes com uma conta InfinitePay real.
+
+## Atualizações para administradores
+
+Em **Configurações → Atualizações**, contas com `user_roles.role = admin` podem consultar uma seleção de alterações do projeto e abrir os commits no GitHub. A role é consultada via RLS; no modo local, apenas a conta de demonstração mostra uma pré-visualização sem permissões reais. O histórico é editorial e incluído no build: **não** indica se uma migração foi aplicada, se o código publicado na Hostinger está atualizado, nem instala versões. Não coloque segredos ou notas privadas nessa lista estática, pois o bundle frontend é público. A primeira role `admin` deve ser provisionada por um operador autorizado no Supabase, nunca pelo registo público.

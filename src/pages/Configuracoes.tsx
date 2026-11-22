@@ -2,6 +2,9 @@ import { useState } from "react"
 import { toast } from "sonner"
 import { Check, Copy, ExternalLink, Loader2, MessageCircle, Save } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { useAdminAccess } from "@/hooks/useAdminAccess"
+import { SystemUpdates } from "@/components/admin/SystemUpdates"
+import { isSupabaseConfigured } from "@/lib/supabase"
 import { saveProfile } from "@/lib/db"
 import { validatePaymentDetails } from "@/lib/manualPayment"
 import { waLink, waTemplates } from "@/lib/supabase"
@@ -18,6 +21,7 @@ import { Badge } from "@/components/ui/badge"
 export default function Configuracoes() {
   useSeo("Configurações — Hospedaê", "Gira perfil, plano, WhatsApp e o link público de reserva da sua pousada.")
   const { profile, refreshProfile } = useAuth()
+  const adminAccess = useAdminAccess()
   const [nome, setNome] = useState(profile?.nome ?? "")
   const [pousada, setPousada] = useState(profile?.nome_pousada ?? "")
   const [slug, setSlug] = useState(profile?.slug ?? "")
@@ -55,10 +59,11 @@ export default function Configuracoes() {
 
   return (
     <div className="space-y-6">
+      {adminAccess.isError && <p role="alert" className="rounded-xl border border-destructive/30 p-3 text-sm">Não foi possível verificar as permissões de administrador. <Button variant="link" onClick={() => adminAccess.refetch()}>Tentar novamente</Button></p>}
       <div><h1 className="text-2xl font-bold">Configurações</h1><p className="text-sm text-muted-foreground">Perfil, plano, integrações e link público.</p></div>
 
       <Tabs defaultValue="perfil">
-        <TabsList><TabsTrigger value="perfil">Perfil</TabsTrigger><TabsTrigger value="plano">Plano e faturação</TabsTrigger><TabsTrigger value="integracoes">Integrações</TabsTrigger></TabsList>
+        <div className="max-w-full overflow-x-auto pb-1"><TabsList className="w-max"><TabsTrigger value="perfil">Perfil</TabsTrigger><TabsTrigger value="plano">Plano e faturação</TabsTrigger><TabsTrigger value="integracoes">Integrações</TabsTrigger>{adminAccess.data === true && <TabsTrigger value="atualizacoes">Atualizações</TabsTrigger>}</TabsList></div>
 
         <TabsContent value="perfil">
           <Card><CardHeader><CardTitle>Perfil da pousada</CardTitle><CardDescription>Estes dados aparecem no seu link público de reserva.</CardDescription></CardHeader>
@@ -130,6 +135,7 @@ export default function Configuracoes() {
             </CardContent>
           </Card>
         </TabsContent>
+        {adminAccess.data === true && <TabsContent value="atualizacoes"><SystemUpdates demo={!isSupabaseConfigured} /></TabsContent>}
       </Tabs>
     </div>
   )

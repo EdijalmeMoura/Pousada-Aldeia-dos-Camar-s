@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useParams } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -26,6 +26,7 @@ const schema = z.object({
   check_out: z.string().min(1, "Escolha a data de saída"),
   adultos: z.coerce.number().min(1, "Pelo menos 1 adulto"),
   metodo_pagamento: z.enum(["pix", "cartao"]),
+  aceito_privacidade: z.boolean().refine(Boolean, "Aceite os termos e a política de privacidade para continuar."),
 })
 type Form = z.infer<typeof schema>
 
@@ -43,7 +44,7 @@ export default function PublicBooking() {
   })
   useSeo(profileQ.data ? `${profileQ.data.nome_pousada} — Reserve direto sem taxa` : "Reserva direta", "Reserve direto na pousada sem taxa de plataforma. Seleção de PIX ou cartão; pagamento sujeito à confirmação da pousada.")
 
-  const form = useForm<Form>({ resolver: zodResolver(schema), defaultValues: { metodo_pagamento: "pix", adultos: 2 } })
+  const form = useForm<Form>({ resolver: zodResolver(schema), defaultValues: { metodo_pagamento: "pix", adultos: 2, aceito_privacidade: false } })
 
   const entrada = form.watch("check_in")
   const saida = form.watch("check_out")
@@ -168,6 +169,8 @@ export default function PublicBooking() {
                   {quoteQ.isFetching && <p className="text-center text-sm text-muted-foreground">A verificar disponibilidade e tarifa…</p>}
                   {quoteQ.isError && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-center text-sm text-destructive">{quoteQ.error instanceof Error ? quoteQ.error.message : "Não foi possível consultar a tarifa."}</p>}
                   {quoteQ.data && <p className="rounded-xl bg-accent p-3 text-center text-sm font-medium">{quoteQ.data.noites} noite(s) · Total: <strong>{brl(quoteQ.data.valor_total)}</strong> (sem taxa de plataforma)</p>}
+                  <label className="flex items-start gap-2 text-sm"><input type="checkbox" {...form.register("aceito_privacidade")} className="mt-1" /> <span>Li e aceito os <Link to="/termos" target="_blank" rel="noreferrer" className="text-primary underline">Termos</Link> e a <Link to="/privacidade" target="_blank" rel="noreferrer" className="text-primary underline">Política de privacidade</Link> para esta reserva.</span></label>
+                  {form.formState.errors.aceito_privacidade && <p role="alert" className="text-sm text-destructive">{form.formState.errors.aceito_privacidade.message}</p>}
                   <Button type="submit" className="w-full" disabled={book.isPending || !quoteQ.data || quoteQ.isFetching}>{book.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Confirmar reserva direta</Button>
                   <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4" /> Sem cobrança online · Pagamento combinado com a pousada</p>
                 </form>

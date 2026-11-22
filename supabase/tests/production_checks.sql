@@ -1,4 +1,4 @@
--- Execute no SQL Editor do projeto Supabase, DEPOIS das migrações 001–011.
+-- Execute no SQL Editor do projeto Supabase, DEPOIS das migrações 001–012.
 -- Leitura de catálogo apenas: não altera reservas, perfis ou outros dados.
 DO $checks$
 DECLARE
@@ -31,7 +31,7 @@ BEGIN
     'public.public_pousada(text)',
     'public.public_quartos(text)',
     'public.cotar_reserva_publica(text,uuid,date,date,integer)',
-    'public.criar_reserva_publica(text,uuid,text,text,text,date,date,integer,text)'
+    'public.criar_reserva_publica_com_consentimento(text,uuid,text,text,text,date,date,integer,text,boolean)'
   ] LOOP
     IF to_regprocedure(function_name) IS NULL THEN
       missing := array_append(missing, 'Função pública ausente: ' || function_name);
@@ -69,6 +69,9 @@ BEGIN
       missing := array_append(missing, 'Relação de isolamento entre proprietários ausente: ' || function_name);
     END IF;
   END LOOP;
+  IF has_function_privilege('anon', 'public.criar_reserva_publica(text,uuid,text,text,text,date,date,integer,text)', 'EXECUTE') THEN
+    missing := array_append(missing, 'API pública antiga permite reserva sem consentimento');
+  END IF;
   IF to_regprocedure('public.consume_ai_quota(uuid)') IS NULL THEN
     missing := array_append(missing, 'Função de quota de IA ausente');
   ELSIF has_function_privilege('anon','public.consume_ai_quota(uuid)','EXECUTE')

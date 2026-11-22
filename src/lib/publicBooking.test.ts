@@ -16,7 +16,7 @@ const date = (offset: number) => {
   return d.toISOString().slice(0, 10)
 }
 const booking = () => ({ nome_hospede: "Ana Lima", email: "ana@example.com", telefone: "81999999999",
-  check_in: date(0), check_out: date(2), adultos: 2, metodo_pagamento: "pix" as const })
+  check_in: date(0), check_out: date(2), adultos: 2, metodo_pagamento: "pix" as const, aceito_privacidade: true })
 
 beforeEach(() => {
   const store = new Map<string, string>()
@@ -31,6 +31,10 @@ describe("reserva pública em demonstração", () => {
     expect(() => bookingDates({ ...booking(), check_out: date(-1) }, 2)).toThrow("datas")
     expect(() => bookingDates({ ...booking(), check_out: date(91) }, 2)).toThrow("90")
     expect(() => bookingDates({ ...booking(), adultos: 3 }, 2)).toThrow("capacidade")
+  })
+
+  it("recusa pedidos sem declaração de aceitação", async () => {
+    await expect(createPublicBooking("pousada", "owner", room, { ...booking(), aceito_privacidade: false })).rejects.toThrow("aceitar")
   })
 
   it("impede reservas em dias bloqueados e permite datas adjacentes", async () => {

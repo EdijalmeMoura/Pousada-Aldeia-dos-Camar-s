@@ -28,7 +28,7 @@ export interface Reserva {
   estado: "pendente" | "confirmada" | "cancelada" | "concluida"
   metodo_pagamento: "pix" | "cartao"; valor_total: number; codigo_reserva: string
   origem: "direta" | "plataforma"; checkout_url?: string; pagamento_estado?: "nao_iniciado" | "aguarda_pagamento" | "pago"
-  motivo_cancelamento?: string; cancelada_em?: string; reembolso_estado?: "nao_aplicavel" | "requer_analise" | "registado_manual"; reembolso_referencia?: string
+  consentimento_em?: string; motivo_cancelamento?: string; cancelada_em?: string; reembolso_estado?: "nao_aplicavel" | "requer_analise" | "registado_manual"; reembolso_referencia?: string
   created_at: string; updated_at: string
 }
 export interface Checkin {

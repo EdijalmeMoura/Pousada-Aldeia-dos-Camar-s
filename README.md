@@ -144,3 +144,7 @@ Aplique `supabase/migrations/013_reserved_slugs.sql` depois da `012`. O onboardi
 ## Formulário e navegação por teclado
 
 A reserva pública valida e explica datas de entrada/saída, limite de 90 noites, telefone e aceitação da privacidade; a lotação é limitada ao quarto selecionado. O botão de confirmar só fica ativo depois de obter uma cotação válida. Landing e área da pousada incluem ligação para saltar diretamente para o conteúdo e o menu móvel anuncia o estado aberto/fechado. Estas verificações no navegador complementam, mas não substituem, as validações das funções SQL.
+
+## Ensaio RLS com duas pousadas
+
+O comando `npm run test:supabase` prepara um teste de integração bloqueado por defeito para um projeto Supabase **de ensaio**: cria duas contas efémeras, verifica isolamento RLS, RPCs anónimas e sobreposição de reservas, e tenta removê-las no fim. Consulte `docs/DEPLOY-HOSTINGER.md` para as variáveis privadas e cuidados. Não foi executado aqui porque não existe projeto Supabase configurado; não substitui testes com uma conta InfinitePay real.
